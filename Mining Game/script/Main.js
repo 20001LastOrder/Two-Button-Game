@@ -3,7 +3,7 @@ var Context;
 var coin = new Image();
 coin.src = "img/sprite/coin.png";
 var img = new Image();
-img.src = "img/sprite/water4.png";
+img.src = "img/sprite/Explosion1.png";
 window.onload = function(){
 	canvas = document.getElementById('gameCanvas');
 	context = canvas.getContext('2d');
@@ -11,7 +11,8 @@ window.onload = function(){
 	
 	//alert(img.src);
 	var sprite = new Sprite(context,1000,100,coin,10);
-	var water = new Sprite(context,768,192,img,4);
+	var water = new Sprite(context,960,576,img,12);
+	water.setDimensions(3,5);
 	setInterval(function(){
 		context.clearRect(0,0,canvas.width,canvas.height);
 		context.fillStyle = 'blue';
