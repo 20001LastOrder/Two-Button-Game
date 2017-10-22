@@ -1,26 +1,64 @@
 var canvas;
 var Context;
+var numOfCoins = 5;
 var coin = new Image();
-coin.src = "img/sprite/coin.png";
 var img = new Image();
-img.src = "img/sprite/Explosion1.png";
+var background = new Image();
+var coins = [];
+//load resorces
+coin.src = "img/sprite/coin.png";
+img.src = "img/sprite/Earth5.png";
+background.src = "img/BG/mine.png";
 window.onload = function(){
+	startGame();
+	var framePerSecond = 30;
+	setInterval(function(){
+		update();
+		drawGame();
+		/*sprite.render(0,0);
+		sprite.update();
+		water.update();
+		if(water.frameIndex <= 20 && water.frameIndex >=1){
+			water.render(100,100);
+		}*/
+	}, 1000/framePerSecond);
+};
+
+var update = function(){
+	
+};
+
+var drawGame = function(){
+
+	context.clearRect(0,0,canvas.width,canvas.height);
+	context.fillStyle = 'black';
+	context.fillRect(0,0,canvas.width,canvas.height);
+	context.drawImage(background, 0,0);
+	for(var i = 0; i < coins.length; i++){
+		coins[i].animation(true);
+	}
+};
+
+var startGame = function(){
 	canvas = document.getElementById('gameCanvas');
 	context = canvas.getContext('2d');
+	while(coins.length < numOfCoins){
+		spawnCoin();
+	}
+//	var water = new Sprite(context,960,1152,img,30);
+//	water.ticksPerFrame = 3;
+//	water.scaleRatio = 3;
+//	water.setDimensions(6,5);
+};
 
-	
-	//alert(img.src);
-	var sprite = new Sprite(context,1000,100,coin,10);
-	var water = new Sprite(context,960,576,img,12);
-	water.setDimensions(3,5);
-	setInterval(function(){
-		context.clearRect(0,0,canvas.width,canvas.height);
-		context.fillStyle = 'blue';
-	    context.fillRect(0,0,canvas.width,canvas.height);
-		sprite.render(0,0);
-		sprite.update();
-		water.render(100,100);
-		water.update();
-	}, 1000/30);
-	//sprite.render(0,0);
+var spawnCoin = function(){
+	coinId = coins.length;
+	var thisCoin = new Sprite(context, 1000,100,coin,10);
+	thisCoin.scaleRatio = (Math.random()*2) + 0.5;
+	var x = Math.random() * (canvas.width - thisCoin.getFrameWidth());
+	var y = (Math.random() * (canvas.height - 345 - thisCoin.getFrameHeight())) + 345;
+	coins[coinId] = thisCoin;
+	thisCoin.x = x;
+	thisCoin.y = y;
+	thisCoin.render(); 
 };

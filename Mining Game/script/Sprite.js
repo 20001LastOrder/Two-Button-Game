@@ -1,6 +1,7 @@
 //this class for animation a Sprite
 //
 //Sprite with single row
+//set repeat play as default
 function Sprite(context, width, height, img,nOf){
 	//this.initialize
 	this.context = context;
@@ -16,6 +17,10 @@ function Sprite(context, width, height, img,nOf){
 	this.height = height;
 	this.img = img;
 	this.scaleRatio = 1;
+	this.x = 0;
+	this.y = 0;
+	this.isRepeat = true;
+	this.needContinue = true;
 }
 
 //for multi rows of sprite sheet
@@ -26,7 +31,19 @@ Sprite.prototype.setDimensions = function(rows, colomns){
 
 
 Sprite.prototype.animation = function(isRepeat){
+	this.isRpeat = isRepeat;
+	this.update();
+	if(this.needContinue){
+		this.render();
+	}
+};
 
+Sprite.prototype.animation = function(isRepeat,x,y){
+	this.isRepeat = isRepeat;
+	this.update();
+	if(this.needContinue){
+		this.render(x,y);
+	}
 };
 
 Sprite.prototype.update = function(){
@@ -57,6 +74,8 @@ Sprite.prototype.update = function(){
 
 //function for draw the graph;
 Sprite.prototype.render = function(x,y){
+	this.x = x;
+	this.y = y;
 	this.context.drawImage(
 			this.img,                                        
 			this.colomnIndex*this.width/this.numberOfColomns,   //local x
@@ -69,3 +88,26 @@ Sprite.prototype.render = function(x,y){
 			this.height/this.numberOfRows*this.scaleRatio    //ch
 		);
 };
+
+Sprite.prototype.render = function(){
+	this.context.drawImage(
+			this.img,                                        
+			this.colomnIndex*this.width/this.numberOfColomns,   //local x
+			(this.rowIndex)*this.height /this.numberOfRows, //ly
+			this.width/this.numberOfColomns,                  //lw
+			this.height/this.numberOfRows,                   //lh
+			this.x,                                               //convas x
+			this.y,                                               //cy
+			this.width/this.numberOfColomns*this.scaleRatio, //cw
+			this.height/this.numberOfRows*this.scaleRatio    //ch
+		);
+};
+
+Sprite.prototype.getFrameWidth = function(){
+	return this.width / this.numberOfColomns * this.scaleRatio;
+};
+
+Sprite.prototype.getFrameHeight = function(){
+	return this.height / this.numberOfRows * this.scaleRatio;
+};
+
