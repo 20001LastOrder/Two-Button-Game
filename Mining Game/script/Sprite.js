@@ -111,3 +111,19 @@ Sprite.prototype.getFrameHeight = function(){
 	return this.height / this.numberOfRows * this.scaleRatio;
 };
 
+Sprite.prototype.isOverlap = function(sprite){
+	var higherSprite = (this.getFrameHeight() < sprite.getFrameHeight())? sprite : this; 
+	var widerSprite = (this.getFrameWidth() < sprite.getFrameWidth())? sprite : this;
+	var lowerSprite = (this.getFrameHeight() < sprite.getFrameHeight())? this : sprite; 
+	var shorterSprite = (this.getFrameWidth() < sprite.getFrameWidth())? this : sprite;
+	//find if the horizontal interval of the shorterSprite is within the widerSprite
+	//and if the vertical interval of the lowerSprite is within higerSprite 
+	var leftPointWithin = (higherSprite.y<lowerSprite.y)&& (lowerSprite.y<higherSprite.y + higherSprite.getFrameWidth());
+	var rightPointWithin = (higherSprite.y<lowerSprite.y + lowerSprite.getFrameWidth())&& (lowerSprite.y + lowerSprite.getFrameWidth()<higherSprite.y + higherSprite.getFrameWidth());
+	var topPointWithin = widerSprite.x<shorterSprite.x && shorterSprite.x<widerSprite.x + higherSprite.getFrameHeight();
+	var bottomPointWithin = widerSprite.x<shorterSprite.x + shorterSprite.getFrameHeight() && shorterSprite.x + shorterSprite.getFrameHeight()<widerSprite.x + higherSprite.getFrameHeight();
+	if((leftPointWithin || rightPointWithin) && (topPointWithin || bottomPointWithin)){
+		return true;
+	}
+	return false;
+};

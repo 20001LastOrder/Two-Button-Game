@@ -1,20 +1,26 @@
 var canvas;
 var Context;
-var numOfCoins = 5;
+var numOfCoins = 10;
 var coin = new Image();
 var img = new Image();
-var background = new Image();
+var ground = new Image();
 var coins = [];
+//for mouse control to debug
+var mouseX, mouseY;
+const GROUND_HEIGHT = 200;
 //load resorces
 coin.src = "img/sprite/coin.png";
 img.src = "img/sprite/Earth5.png";
-background.src = "img/BG/mine.png";
+ground.src = "img/BG/mine.png";
 window.onload = function(){
-	startGame();
-	var framePerSecond = 30;
-	setInterval(function(){
+		startGame();
+		var framePerSecond = 30;
+		setInterval(function(){
 		update();
 		drawGame();
+		//function to detecting the mouse movement for debugging
+		canvas.addEventListener('mousemove', updateMousePos);
+		
 		/*sprite.render(0,0);
 		sprite.update();
 		water.update();
@@ -24,16 +30,24 @@ window.onload = function(){
 	}, 1000/framePerSecond);
 };
 
+function updateMousePos(evt) {
+	var rect = canvas.getBoundingClientRect();
+	var root = document.documentElement;
+
+	mouseX = evt.clientX - rect.left - root.scrollLeft;
+	mouseY = evt.clientY - rect.top - root.scrollTop;
+};
 var update = function(){
 	
+
 };
 
+//Draw the background and objects
 var drawGame = function(){
-
 	context.clearRect(0,0,canvas.width,canvas.height);
 	context.fillStyle = 'black';
 	context.fillRect(0,0,canvas.width,canvas.height);
-	context.drawImage(background, 0,0);
+	context.drawImage(ground, 0,0, canvas.width, GROUND_HEIGHT);
 	for(var i = 0; i < coins.length; i++){
 		coins[i].animation(true);
 	}
@@ -45,20 +59,28 @@ var startGame = function(){
 	while(coins.length < numOfCoins){
 		spawnCoin();
 	}
-//	var water = new Sprite(context,960,1152,img,30);
-//	water.ticksPerFrame = 3;
-//	water.scaleRatio = 3;
-//	water.setDimensions(6,5);
 };
 
 var spawnCoin = function(){
 	coinId = coins.length;
 	var thisCoin = new Sprite(context, 1000,100,coin,10);
-	thisCoin.scaleRatio = (Math.random()*2) + 0.5;
-	var x = Math.random() * (canvas.width - thisCoin.getFrameWidth());
-	var y = (Math.random() * (canvas.height - 345 - thisCoin.getFrameHeight())) + 345;
+	thisCoin.scaleRatio = (Math.random()*0.5) + 0.5;
+	//Reset the position when the coin is overlap with another coin
+	//find a random point only within the range of the restricted area
+	var hasOverlapWithOtherCoin = false;
+	do{
+		hasOverlapWithOtherCoin = false;
+		var x = Math.random() * (canvas.width - thisCoin.getFrameWidth());
+		var y = (Math.random() * (canvas.height - GROUND_HEIGHT -50 - thisCoin.getFrameHeight())) + GROUND_HEIGHT+50;
+		thisCoin.x = x;
+		thisCoin.y = y;
+		for(var i = 0; i < coins.length; i++){
+			if(thisCoin.isOverlap(coins[i])){
+				hasOverlapWithOtherCoin = true;
+			}
+		}
+	}while(hasOverlapWithOtherCoin);
+	
 	coins[coinId] = thisCoin;
-	thisCoin.x = x;
-	thisCoin.y = y;
 	thisCoin.render(); 
 };
