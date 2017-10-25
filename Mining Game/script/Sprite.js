@@ -127,3 +127,19 @@ Sprite.prototype.isOverlap = function(sprite){
 	}
 	return false;
 };
+
+//class for collectable
+function Collectable(sprite, value){
+	this.sprite = sprite; 
+	this.value = score;
+}
+
+
+
+//class for player
+//Sprite number Sprite Sprite
+function Player(sprite, score, grab){
+	this.sprite = sprite;
+	this.score = score;
+	this.grab = grab;
+}
