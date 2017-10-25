@@ -110,8 +110,9 @@ var drawCollectableObject = function(){
 
 var drawPlayer = function(player, x, y){
 	player.sprite.animation(true);
+	//player.grab.update();
 	player.grab.render();
-	//TODO: add player animation and add constant for initial player and 
+		//TODO: add player animation and add constant for initial player and 
 	//arrow.
 
 };
@@ -119,13 +120,13 @@ var drawPlayer = function(player, x, y){
 
 var initiatePlayer = function(x, y){
 	var playerSprite = new Sprite(context, 576, 96, playerImg, PLAYER_FRAMES);
-	var grab = new Sprite(context, 537/3, 716/4, arrow, 1);
+	var grab = new Sprite(context, 128, 96, arrow, 2);
 	var thisPlayer = new Player(playerSprite, 0, grab);
 	thisPlayer.sprite.x = x;
 	thisPlayer.sprite.y = y;
 	thisPlayer.sprite.ticksPerFrame = 3;
-	thisPlayer.grab.scaleRatio = 0.5;
-	thisPlayer.grab.x = x ;
-	thisPlayer.grab.y = y + 100;
+	thisPlayer.grab.scaleRatio = 2.5;
+	thisPlayer.grab.x = x - 30 ;
+	thisPlayer.grab.y = y + 60;
 	return (thisPlayer);
 };
