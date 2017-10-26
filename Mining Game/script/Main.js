@@ -7,6 +7,8 @@ var ground = new Image();
 var coins = [];
 var player;
 var playerImg = new Image();
+var grabRotation = 0.2;
+var rotationSpeed = 0.05;
 //for mouse control to debug
 var mouseX, mouseY;
 //constants
@@ -115,11 +117,16 @@ var drawCollectableObject = function(){
 
 var drawPlayer = function(player, x, y){
 	player.sprite.animation(true);
-	drawBitmapCenteredWithRotation(player.grab.img, player.grab.x,player.grab.y,0.2);
-	console.log(player.grab.x);
+	//drawBitmapCenteredWithRotation(player.grab.img, player.grab.x,player.grab.y,grabRotation );
+	player.grab.rotate(grabRotation, 470, 200);
+	if(grabRotation >= Math.PI/3){
+			rotationSpeed *= -1;
+	}else if(grabRotation <= -Math.PI/3){
+		rotationSpeed *= -1;
+	} //end changeRotation
+	grabRotation += rotationSpeed;
 	//player.grab.render();
 	//arrow.
-
 };
 
 
@@ -137,11 +144,12 @@ var initiatePlayer = function(x, y){
 	return (thisPlayer);
 };
 
+//Implement this mehthod to the Sprit class, with the rotation around an arbitary point with only one frame
+//and make it possible to change the frame during rotation
 function drawBitmapCenteredWithRotation(useBitmap, atX,atY, withAng) {
 	context.save();
 	context.translate(atX, atY);
 	context.rotate(withAng);
 	context.drawImage(useBitmap, -useBitmap.width/2, -useBitmap.height/2);
-	//console.log(-useBitmap.width/2, -useBitmap.height/2);
 	context.restore();
 }

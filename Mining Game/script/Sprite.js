@@ -80,7 +80,6 @@ Sprite.prototype.update = function(){
 Sprite.prototype.renderWithCoord = function(x,y){
 	this.x = x;
 	this.y = y;
-	console.log(x,y);
 	this.context.drawImage(
 			this.img,                                        
 			this.colomnIndex*this.width/this.numberOfColomns,   //local x
@@ -129,9 +128,9 @@ Sprite.prototype.isOverlap = function(sprite){
 	var bottomPointWithin = widerSprite.x<shorterSprite.x + shorterSprite.getFrameHeight() && shorterSprite.x + shorterSprite.getFrameHeight()<widerSprite.x + higherSprite.getFrameHeight();
 	if((leftPointWithin || rightPointWithin) && (topPointWithin || bottomPointWithin)){
 		return true;
-	}
+	} //end judge overload
 	return false;
-};
+}; //end isOverlap
 
 Sprite.prototype.continue = function(){
 	this.needContinue = true;
@@ -142,12 +141,18 @@ Sprite.prototype.pause = function(){
 };
 
 //rotation around a certain point
-Sprite.prototype.rotate = function(angle){
+Sprite.prototype.rotate = function(angle, x, y){
+	var xPos = this.x;
+	var yPos = this.y;
 	this.context.save();
-	this.context.translate(this.x, this.y);
+	this.context.translate(x , y);
 	this.context.rotate(angle);
-	context.drawImage(this.img, this.x, this.y);
-	console.log(this.img.width);
+	//this change the value of current x and y
+	this.renderWithCoord(-this.getFrameWidth()/2, -40);
+
+	//change it back to the needed coord
+	this.x = xPos;
+	this.y = yPos;
 	this.context.restore();
 };
 
