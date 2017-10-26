@@ -13,6 +13,7 @@ var mouseX, mouseY;
 const GROUND_HEIGHT = 200;
 const PLAYER_FRAMES = 6;
 const PLAY_Y = 100;
+const EMPTY_SPACE_HEIGHT = 50;
 
 //load resorces
 coin.src = "img/sprite/coin.png";
@@ -44,6 +45,7 @@ updateMousePos = function(evt) {
 
 	mouseX = evt.clientX - rect.left - root.scrollLeft;
 	mouseY = evt.clientY - rect.top - root.scrollTop;
+
 };
 
 
@@ -57,6 +59,9 @@ var drawGame = function(){
 	drawBackground();
 	drawCollectableObject();
 	drawPlayer(player, 300,50);
+	context.fillStyle = "red";
+	context.font="30px Verdana";
+	context.fillText("(" + mouseX + " ," + mouseY + ")", mouseX,mouseY);	
 };
 
 //start game (call once only)
@@ -81,7 +86,7 @@ var spawnCoin = function(){
 	do{
 		hasOverlapWithOtherCoin = false;
 		var x = Math.random() * (canvas.width - thisCoin.getFrameWidth());
-		var y = (Math.random() * (canvas.height - GROUND_HEIGHT -50 - thisCoin.getFrameHeight())) + GROUND_HEIGHT+50;
+		var y = (Math.random() * (canvas.height - GROUND_HEIGHT -EMPTY_SPACE_HEIGHT - thisCoin.getFrameHeight())) + GROUND_HEIGHT+50;
 		thisCoin.x = x;
 		thisCoin.y = y;
 		for(var i = 0; i < coins.length; i++){
@@ -110,9 +115,9 @@ var drawCollectableObject = function(){
 
 var drawPlayer = function(player, x, y){
 	player.sprite.animation(true);
-	//player.grab.update();
-	player.grab.render();
-		//TODO: add player animation and add constant for initial player and 
+	drawBitmapCenteredWithRotation(player.grab.img, player.grab.x,player.grab.y,0.2);
+	console.log(player.grab.x);
+	//player.grab.render();
 	//arrow.
 
 };
@@ -126,7 +131,17 @@ var initiatePlayer = function(x, y){
 	thisPlayer.sprite.y = y;
 	thisPlayer.sprite.ticksPerFrame = 3;
 	thisPlayer.grab.scaleRatio = 2.5;
+	thisPlayer.grab.ticksPerFrame = 5;
 	thisPlayer.grab.x = x - 30 ;
 	thisPlayer.grab.y = y + 60;
 	return (thisPlayer);
 };
+
+function drawBitmapCenteredWithRotation(useBitmap, atX,atY, withAng) {
+	context.save();
+	context.translate(atX, atY);
+	context.rotate(withAng);
+	context.drawImage(useBitmap, -useBitmap.width/2, -useBitmap.height/2);
+	//console.log(-useBitmap.width/2, -useBitmap.height/2);
+	context.restore();
+}

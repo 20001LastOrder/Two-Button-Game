@@ -32,10 +32,10 @@ Sprite.prototype.setDimensions = function(rows, colomns){
 
 Sprite.prototype.animation = function(isRepeat){
 	this.isRpeat = isRepeat;
-	this.update();
 	if(this.needContinue){
-		this.render();
+		this.update();
 	}
+	this.render();
 };
 
 Sprite.prototype.animation = function(isRepeat,x,y){
@@ -61,21 +61,26 @@ Sprite.prototype.update = function(){
 					this.rowIndex++;
 				}else{
 					this.rowIndex = 0;
-				}
-			}
+				} //end check row numbers
+			} //end check colomn numbers
 		}else{
 			//reset colonms and rows when all frames are done
-			this.frameIndex = 0;
-			this.rowIndex = 0;
-			this.colomnIndex = 0;
-		} //end if
-	}
-};
+			if(this.isRepeat){
+				this.frameIndex = 0;
+				this.rowIndex = 0;
+				this.colomnIndex = 0;
+			}else{
+				needContinue = false;
+			} //end check if repeat
+		} //end check frames
+	} //end check ticks
+}; //end update
 
 //function for draw the graph;
-Sprite.prototype.render = function(x,y){
+Sprite.prototype.renderWithCoord = function(x,y){
 	this.x = x;
 	this.y = y;
+	console.log(x,y);
 	this.context.drawImage(
 			this.img,                                        
 			this.colomnIndex*this.width/this.numberOfColomns,   //local x
@@ -127,6 +132,25 @@ Sprite.prototype.isOverlap = function(sprite){
 	}
 	return false;
 };
+
+Sprite.prototype.continue = function(){
+	this.needContinue = true;
+};
+
+Sprite.prototype.pause = function(){
+	this.needContinue = false;
+};
+
+//rotation around a certain point
+Sprite.prototype.rotate = function(angle){
+	this.context.save();
+	this.context.translate(this.x, this.y);
+	this.context.rotate(angle);
+	context.drawImage(this.img, this.x, this.y);
+	console.log(this.img.width);
+	this.context.restore();
+};
+
 
 //class for collectable
 function Collectable(sprite, value){
