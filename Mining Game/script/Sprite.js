@@ -76,24 +76,13 @@ Sprite.prototype.update = function(){
 	} //end check ticks
 }; //end update
 
-//function for draw the graph;
-Sprite.prototype.renderWithCoord = function(x,y){
-	this.x = x;
-	this.y = y;
-	this.context.drawImage(
-			this.img,                                        
-			this.colomnIndex*this.width/this.numberOfColomns,   //local x
-			(this.rowIndex)*this.height /this.numberOfRows, //ly
-			this.width/this.numberOfColomns,                  //lw
-			this.height/this.numberOfRows,                   //lh
-			x,                                               //convas x
-			y,                                               //cy
-			this.width/this.numberOfColomns*this.scaleRatio, //cw
-			this.height/this.numberOfRows*this.scaleRatio    //ch
-		);
-};
-
-Sprite.prototype.render = function(){
+//function for draw the graph
+Sprite.prototype.render = function(x,y){
+	//check if x and y are Number
+	if(typeof(x) == "number" && typeof(y) == "number"){
+		this.x = x;
+		this.y = y;
+	} //end judge input
 	this.context.drawImage(
 			this.img,                                        
 			this.colomnIndex*this.width/this.numberOfColomns,   //local x
@@ -148,7 +137,7 @@ Sprite.prototype.rotate = function(angle, x, y){
 	this.context.translate(x , y);
 	this.context.rotate(angle);
 	//this change the value of current x and y
-	this.renderWithCoord(-this.getFrameWidth()/2, -40);
+	this.render(-this.getFrameWidth()/2, -40);
 
 	//change it back to the needed coord
 	this.x = xPos;
@@ -171,4 +160,10 @@ function Player(sprite, score, grab){
 	this.sprite = sprite;
 	this.score = score;
 	this.grab = grab;
+	this.grabRotation = 0.2;
+	this.grabPivotX = 73;
+	this.grabPivotY = 40;
+	this.rotationSpeed = 0.05;
+	this.grabSpeedX = 0;
+	this.grabSpeedY = 0;
 }

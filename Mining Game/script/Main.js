@@ -7,8 +7,6 @@ var ground = new Image();
 var coins = [];
 var player;
 var playerImg = new Image();
-var grabRotation = 0.2;
-var rotationSpeed = 0.05;
 //for mouse control to debug
 var mouseX, mouseY;
 //constants
@@ -25,12 +23,13 @@ playerImg.src = "img/sprite/Player1.png";
 
 window.onload = function(){
 	startGame();
+	canvas.addEventListener('mousemove', updateMousePos);
+	document.addEventListener('keydown', characterControl);
 	var framePerSecond = 30;
 	setInterval(function(){
 		update();
 		drawGame();
 		//function to detecting the mouse movement for debugging
-		canvas.addEventListener('mousemove', updateMousePos);
 		
 		/*sprite.render(0,0);
 		sprite.update();
@@ -41,7 +40,7 @@ window.onload = function(){
 	}, 1000/framePerSecond);
 };
 
-updateMousePos = function(evt) {
+var updateMousePos = function(evt) {
 	var rect = canvas.getBoundingClientRect();
 	var root = document.documentElement;
 
@@ -50,16 +49,22 @@ updateMousePos = function(evt) {
 
 };
 
+var characterControl = function(event){
+	if(event.keyCode == 83){
+		moveGrab();
+	}
+	console.log("active")
+};
 
 var update = function(){
-	
+	updatePlayer();
 
 };
 
 //Draw game contnt
 var drawGame = function(){
 	drawBackground();
-	drawCollectableObject();
+	drawCollectableObjects();
 	drawPlayer(player, 300,50);
 	context.fillStyle = "red";
 	context.font="30px Verdana";
@@ -107,29 +112,36 @@ var drawBackground = function(){
 	context.fillStyle = 'black';
 	context.fillRect(0,0,canvas.width,canvas.height);
 	context.drawImage(ground, 0,0, canvas.width, GROUND_HEIGHT);
-};
+}; //end drawBackGround
 
-var drawCollectableObject = function(){
+var drawCollectableObjects = function(){
 	for(var i = 0; i < coins.length; i++){
 		coins[i].animation(true);
 	}
-};
+}; //end drawCollectableObjects
 
 var drawPlayer = function(player, x, y){
 	player.sprite.animation(true);
-	//drawBitmapCenteredWithRotation(player.grab.img, player.grab.x,player.grab.y,grabRotation );
-	player.grab.rotate(grabRotation, 470, 200);
-	if(grabRotation >= Math.PI/3){
-			rotationSpeed *= -1;
-	}else if(grabRotation <= -Math.PI/3){
-		rotationSpeed *= -1;
+	//rotate and draw the grab
+	player.grab.rotate(player.grabRotation, player.grab.x+player.grabPivotX, player.grab.y + player.grabPivotY);
+	if(player.grabRotation >= Math.PI/3){
+			player.rotationSpeed *= -1;
+	}else if(player.grabRotation <= -Math.PI/3){
+		player.rotationSpeed *= -1;
 	} //end changeRotation
-	grabRotation += rotationSpeed;
-	//player.grab.render();
+	player.grabRotation += player.rotationSpeed;
 	//arrow.
+}; //end drawPlayer
+
+var updatePlayer = function(){
+	//add minus sign at the front because clockwise is negative, counterclockwise is positive
+	player.grab.x += (player.grabSpeedX * Math.sin(-player.grabRotation));
+	player.grab.y += (player.grabSpeedY * Math.cos(-player.grabRotation));
+	player.grabPivotX = player.grab.x - 324;
+	player.grabPivotY = player.grab.y - 120;
 };
 
-
+//return a player object
 var initiatePlayer = function(x, y){
 	var playerSprite = new Sprite(context, 576, 96, playerImg, PLAYER_FRAMES);
 	var grab = new Sprite(context, 128, 96, arrow, 2);
@@ -142,14 +154,13 @@ var initiatePlayer = function(x, y){
 	thisPlayer.grab.x = x - 30 ;
 	thisPlayer.grab.y = y + 60;
 	return (thisPlayer);
-};
+}; //end initalte player
 
-//Implement this mehthod to the Sprit class, with the rotation around an arbitary point with only one frame
-//and make it possible to change the frame during rotation
-function drawBitmapCenteredWithRotation(useBitmap, atX,atY, withAng) {
-	context.save();
-	context.translate(atX, atY);
-	context.rotate(withAng);
-	context.drawImage(useBitmap, -useBitmap.width/2, -useBitmap.height/2);
-	context.restore();
-}
+var moveGrab = function(){
+	//if the grab is at default position, stop rotation and add speed
+	if(player.grab.x == 397 && player.grab.y == 160){
+		player.rotationSpeed = 0;
+		player.grabSpeedX = 2.5;
+		player.grabSpeedY = 2.5;
+	}
+};
