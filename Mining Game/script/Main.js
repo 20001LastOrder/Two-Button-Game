@@ -123,7 +123,7 @@ var drawCollectableObjects = function(){
 var drawPlayer = function(player, x, y){
 	player.sprite.animation(true);
 	//rotate and draw the grab
-	player.grab.rotate(player.grabRotation, player.grab.x+player.grabPivotX, player.grab.y + player.grabPivotY);
+	player.grab.rotate(player.grabRotation, player.grab.x, player.grab.y );
 	if(player.grabRotation >= Math.PI/3){
 			player.rotationSpeed *= -1;
 	}else if(player.grabRotation <= -Math.PI/3){
@@ -134,33 +134,52 @@ var drawPlayer = function(player, x, y){
 }; //end drawPlayer
 
 var updatePlayer = function(){
+	updateGrab();
+	
+};
+
+var updateGrab = function(){
 	//add minus sign at the front because clockwise is negative, counterclockwise is positive
 	player.grab.x += (player.grabSpeedX * Math.sin(-player.grabRotation));
 	player.grab.y += (player.grabSpeedY * Math.cos(-player.grabRotation));
-	player.grabPivotX = player.grab.x - 324;
-	player.grabPivotY = player.grab.y - 120;
+	//reset the shift of pictures
+	//if grab is out of the box, put it backward
+	//add the pivot because it is the point that the picture real is
+
+	if(player.grab.x >= canvas.width - player.grab.getFrameWidth()  || 
+		player.grab.y >= canvas.height - player.grab.getFrameHeight() ||
+		player.grab.x  <= player.grab.getFrameHeight()){
+		player.grabSpeedX *= -1;
+		player.grabSpeedY *= -1;
+	}else if(player.grabSpeedX != 0 && Math.round(player.grab.x) == 470 && 
+			 Math.round(player.grab.y) == 200){
+		player.grabSpeedX = 0;
+		player.grabSpeedY = 0;
+		player.rotationSpeed = 0.05;
+	}
+	console.log(Math.round(player.grab.x) + ", " + Math.round(player.grab.y ));
 };
 
 //return a player object
 var initiatePlayer = function(x, y){
 	var playerSprite = new Sprite(context, 576, 96, playerImg, PLAYER_FRAMES);
-	var grab = new Sprite(context, 128, 96, arrow, 2);
+	var grab = new Sprite(context, 54, 30, arrow, 2);
 	var thisPlayer = new Player(playerSprite, 0, grab);
 	thisPlayer.sprite.x = x;
 	thisPlayer.sprite.y = y;
 	thisPlayer.sprite.ticksPerFrame = 3;
-	thisPlayer.grab.scaleRatio = 2.5;
+	thisPlayer.grab.scaleRatio = 2;
 	thisPlayer.grab.ticksPerFrame = 5;
-	thisPlayer.grab.x = x - 30 ;
-	thisPlayer.grab.y = y + 60;
+	thisPlayer.grab.x = 2*(x - 30)-324;
+	thisPlayer.grab.y = 2*(y + 60)-120;
 	return (thisPlayer);
 }; //end initalte player
 
 var moveGrab = function(){
 	//if the grab is at default position, stop rotation and add speed
-	if(player.grab.x == 397 && player.grab.y == 160){
+	if(player.grab.x == 470&& player.grab.y == 200){
 		player.rotationSpeed = 0;
-		player.grabSpeedX = 2.5;
-		player.grabSpeedY = 2.5;
+		player.grabSpeedX = 5;
+		player.grabSpeedY = 5;
 	}
 };
