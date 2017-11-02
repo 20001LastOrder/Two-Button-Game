@@ -7,7 +7,7 @@ function Sprite(context, width, height, img,nOf){
 	this.context = context;
 	this.frameIndex = 0;
 	this.rowIndex = 0;
-	this.colomnIndex = 0;
+	this.columnIndex = 0;
 	this.tickCount = 0;
 	this.ticksPerFrame = 1;
 	this.numberOfFrames = nOf;
@@ -53,10 +53,10 @@ Sprite.prototype.update = function(){
 		//move frames horizontally first and then move it vertically
 		if(this.frameIndex < this.numberOfFrames-1){
 			this.frameIndex++;
-			if(this.colomnIndex < this.numberOfColomns-1){
-				this.colomnIndex++;
+			if(this.columnIndex < this.numberOfColomns-1){
+				this.columnIndex++;
 			}else{
-				this.colomnIndex = 0;
+				this.columnIndex = 0;
 				if(this.rowIndex < this.numberOfRows-1){
 					this.rowIndex++;
 				}else{
@@ -68,7 +68,7 @@ Sprite.prototype.update = function(){
 			if(this.isRepeat){
 				this.frameIndex = 0;
 				this.rowIndex = 0;
-				this.colomnIndex = 0;
+				this.columnIndex = 0;
 			}else{
 				needContinue = false;
 			} //end check if repeat
@@ -85,7 +85,7 @@ Sprite.prototype.render = function(x,y){
 	} //end judge input
 	this.context.drawImage(
 			this.img,                                        
-			this.colomnIndex*this.width/this.numberOfColomns,   //local x
+			this.columnIndex*this.width/this.numberOfColomns,   //local x
 			(this.rowIndex)*this.height /this.numberOfRows, //ly
 			this.width/this.numberOfColomns,                  //lw
 			this.height/this.numberOfRows,                   //lh

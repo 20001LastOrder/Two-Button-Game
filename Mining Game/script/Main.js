@@ -53,7 +53,6 @@ var characterControl = function(event){
 	if(event.keyCode == 83){
 		moveGrab();
 	}
-	console.log("active")
 };
 
 var update = function(){
@@ -140,24 +139,33 @@ var updatePlayer = function(){
 
 var updateGrab = function(){
 	//add minus sign at the front because clockwise is negative, counterclockwise is positive
-	player.grab.x += (player.grabSpeedX * Math.sin(-player.grabRotation));
-	player.grab.y += (player.grabSpeedY * Math.cos(-player.grabRotation));
+	player.grab.x += (player.grabSpeedX);
+	player.grab.y += (player.grabSpeedY );
 	//reset the shift of pictures
 	//if grab is out of the box, put it backward
-	//add the pivot because it is the point that the picture real is
-
 	if(player.grab.x >= canvas.width - player.grab.getFrameWidth()  || 
 		player.grab.y >= canvas.height - player.grab.getFrameHeight() ||
 		player.grab.x  <= player.grab.getFrameHeight()){
 		player.grabSpeedX *= -1;
 		player.grabSpeedY *= -1;
-	}else if(player.grabSpeedX != 0 && Math.round(player.grab.x) == 470 && 
+	}else if(isOverlapWithCollectables(player.grab)){
+		player.grab.columnIndex = 1;
+		player.grabSpeedX *= -1;
+		player.grabSpeedY *= -1;
+
+	}else if(player.grabSpeedY < 0 && Math.round(player.grab.x) == 470 && 
 			 Math.round(player.grab.y) == 200){
+		//reset the position of grab
+		player.grab.x = 470;
+		player.grab.y = 200;
+		//stop the grab moving
 		player.grabSpeedX = 0;
 		player.grabSpeedY = 0;
+		//start rotation again
 		player.rotationSpeed = 0.05;
+		//reset frame
+		player.grab.columnIndex = 1;
 	}
-	console.log(Math.round(player.grab.x) + ", " + Math.round(player.grab.y ));
 };
 
 //return a player object
@@ -179,7 +187,17 @@ var moveGrab = function(){
 	//if the grab is at default position, stop rotation and add speed
 	if(player.grab.x == 470&& player.grab.y == 200){
 		player.rotationSpeed = 0;
-		player.grabSpeedX = 5;
-		player.grabSpeedY = 5;
+		player.grabSpeedX = 5 * Math.sin(-player.grabRotation);
+		player.grabSpeedY = 5 * Math.cos(-player.grabRotation);
 	}
+};
+
+//find if the sprite is overlap with any collectables
+var isOverlapWithCollectables = function(thisSprite){
+	for(var i = 0; i < coins.length; i++){
+		if(thisSprite.isOverlap(coins[i])){
+			return true;
+		}
+	}
+	return false;
 };
