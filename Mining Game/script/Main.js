@@ -84,26 +84,26 @@ var startGame = function(){
 
 var spawnCoin = function(){
 	coinId = coins.length;
-	var thisCoin = new Sprite(context, 1000,100,coin,10);
-	thisCoin.scaleRatio = (Math.random()*0.5) + 0.5;
+	var coinSprite = new Sprite(context, 1000,100,coin,10);
+	coinSprite.scaleRatio = (Math.random()*0.5) + 0.5;
 	//Reset the position when the coin is overlap with another coin
 	//find a random point only within the range of the restricted area
 	var hasOverlapWithOtherCoin = false;
 	do{
 		hasOverlapWithOtherCoin = false;
-		var x = Math.random() * (canvas.width - thisCoin.getFrameWidth());
-		var y = (Math.random() * (canvas.height - GROUND_HEIGHT -EMPTY_SPACE_HEIGHT - thisCoin.getFrameHeight())) + GROUND_HEIGHT+50;
-		thisCoin.x = x;
-		thisCoin.y = y;
+		var x = Math.random() * (canvas.width - coinSprite.getFrameWidth());
+		var y = (Math.random() * (canvas.height - GROUND_HEIGHT -EMPTY_SPACE_HEIGHT - coinSprite.getFrameHeight())) + GROUND_HEIGHT+50;
+		coinSprite.x = x;
+		coinSprite.y = y;
 		for(var i = 0; i < coins.length; i++){
-			if(thisCoin.isOverlap(coins[i])){
+			if(coinSprite.isOverlap(coins[i].sprite)){
 				hasOverlapWithOtherCoin = true;
 			}
 		}
 	}while(hasOverlapWithOtherCoin);
-	
-	coins[coinId] = thisCoin;
-	thisCoin.render(); 
+	coins[coinId] = new Collectable(coinSprite, Math.round(100*coinSprite.scaleRatio));
+	coinSprite.render(); 
+
 };
 
 var drawBackground = function(){
@@ -115,7 +115,7 @@ var drawBackground = function(){
 
 var drawCollectableObjects = function(){
 	for(var i = 0; i < coins.length; i++){
-		coins[i].animation(true);
+		coins[i].sprite.animation(true);
 	}
 }; //end drawCollectableObjects
 
@@ -164,7 +164,7 @@ var updateGrab = function(){
 		//start rotation again
 		player.rotationSpeed = 0.05;
 		//reset frame
-		player.grab.columnIndex = 1;
+		player.grab.columnIndex = 0;
 	}
 };
 
@@ -192,12 +192,9 @@ var moveGrab = function(){
 	}
 };
 
-//find if the sprite is overlap with any collectables
-var isOverlapWithCollectables = function(thisSprite){
-	for(var i = 0; i < coins.length; i++){
-		if(thisSprite.isOverlap(coins[i])){
-			return true;
-		}
-	}
-	return false;
+//find if a player's grab is overlap with any collectables
+var isOverlapWithCollectables = function(thisPlayer){
+	var thisGrab = thisPlayer.grab;
+	var buttomRightX = thisGrab.x  + thisGrab.getFrameHeight * Math.sin(player.grabRotation);
+	var buttomRightXY = thisGrab.y + this.Grab.getFrameHeight * Math.cos(player.grabRotation); 
 };

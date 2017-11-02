@@ -149,7 +149,7 @@ Sprite.prototype.rotate = function(angle, x, y){
 //class for collectable
 function Collectable(sprite, value){
 	this.sprite = sprite; 
-	this.value = score;
+	this.score = value;
 }
 
 
@@ -160,8 +160,9 @@ function Player(sprite, score, grab){
 	this.sprite = sprite;
 	this.score = score;
 	this.grab = grab;
-	this.grabRotation = 0.2;
+	this.grabRotation = 0;
 	this.rotationSpeed = 0.05;
 	this.grabSpeedX = 0;
 	this.grabSpeedY = 0;
+	this.currentCollectable = null; //current hold collectable
 }
