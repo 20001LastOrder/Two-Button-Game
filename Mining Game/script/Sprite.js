@@ -150,6 +150,8 @@ Sprite.prototype.rotate = function(angle, x, y){
 function Collectable(sprite, value){
 	this.sprite = sprite; 
 	this.score = value;
+	this.speedX = 0;
+	this.speedY = 0;
 }
 
 

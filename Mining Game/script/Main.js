@@ -134,7 +134,9 @@ var drawPlayer = function(player, x, y){
 
 var updatePlayer = function(){
 	updateGrab();
+	if(player.currentCollectable != null){
 	
+	}
 };
 
 var updateGrab = function(){
@@ -148,7 +150,7 @@ var updateGrab = function(){
 		player.grab.x  <= player.grab.getFrameHeight()){
 		player.grabSpeedX *= -1;
 		player.grabSpeedY *= -1;
-	}else if(isOverlapWithCollectables(player.grab)){
+	}else if(isOverlapWithCollectables(player)){
 		player.grab.columnIndex = 1;
 		player.grabSpeedX *= -1;
 		player.grabSpeedY *= -1;
@@ -165,7 +167,7 @@ var updateGrab = function(){
 		player.rotationSpeed = 0.05;
 		//reset frame
 		player.grab.columnIndex = 0;
-	}
+	} //end judge grab
 };
 
 //return a player object
@@ -195,6 +197,46 @@ var moveGrab = function(){
 //find if a player's grab is overlap with any collectables
 var isOverlapWithCollectables = function(thisPlayer){
 	var thisGrab = thisPlayer.grab;
-	var buttomRightX = thisGrab.x  + thisGrab.getFrameHeight * Math.sin(player.grabRotation);
-	var buttomRightXY = thisGrab.y + this.Grab.getFrameHeight * Math.cos(player.grabRotation); 
+	//add minus sign to the angle because clockwise is negative, counterclockwise is positive.
+	var buttomCenterX = thisGrab.x  + thisGrab.getFrameHeight() * Math.sin(-player.grabRotation);
+	var buttomCenterY = thisGrab.y + thisGrab.getFrameHeight() * Math.cos(-player.grabRotation); 
+
+	var buttomLeftX = buttomCenterX - (thisGrab.getFrameWidth() / 2 - 5) * Math.cos(-player.grabRotation);
+	var buttomLeftY = buttomCenterY + (thisGrab.getFrameWidth() / 2 - 5) * Math.sin(-player.grabRotation);
+	var buttomRightX = buttomCenterX + (thisGrab.getFrameWidth() / 2 - 5) * Math.cos(-player.grabRotation);
+	var buttomRightY = buttomCenterY - (thisGrab.getFrameWidth() / 2 - 5) * Math.sin(-player.grabRotation);
+	for(var i = 0; i < coins.length; i++){
+		//find the position of the center
+		//the collectable sprite are all is squares, use circle to approach the shape
+		var radius = coins[i].sprite.getFrameWidth()/2;
+		var coinCenterX = coins[i].sprite.x + radius;
+		var coinCenterY = coins[i].sprite.y + radius;
+
+		//get the shortest distance from the center to the buttom 3 points;
+		var distanceX = findMin(Math.abs(buttomCenterX - coinCenterX),
+								Math.abs( buttomLeftX - coinCenterX),
+								Math.abs(buttomRightX - coinCenterX));
+		var distanceY = findMin(Math.abs(buttomCenterY - coinCenterY),
+								Math.abs( buttomLeftY - coinCenterY),
+								Math.abs(buttomRightY - coinCenterY));
+		var distance = Math.sqrt(Math.pow(distanceX,2) + Math.pow(distanceY,2));
+		//uses 10 to make it more close to the coin
+		if(distance < radius-10 * coins[i].sprite.scaleRatio){
+			thisPlayer.currentCollectable = coins[i];
+			return true;
+		}
+	}
+
+	return false;
+};
+
+var findMin = function(x,y,z){
+	var min = x;
+	if(y < min){
+		min = y;
+	}
+	if(z < min){
+		min = z;
+	}
+	return min;
 };
