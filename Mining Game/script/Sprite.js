@@ -130,14 +130,14 @@ Sprite.prototype.pause = function(){
 };
 
 //rotation around a certain point
-Sprite.prototype.rotate = function(angle, x, y){
+Sprite.prototype.rotate = function(angle, x, y, pivotX, pivotY){
 	var xPos = this.x;
 	var yPos = this.y;
 	this.context.save();
 	this.context.translate(x , y);
 	this.context.rotate(angle);
 	//this change the value of current x and y
-	this.render(-this.getFrameWidth()/2, 0);
+	this.render(pivotX,pivotY);
 
 	//change it back to the needed coord
 	this.x = xPos;
@@ -152,6 +152,7 @@ function Collectable(sprite, value){
 	this.score = value;
 	this.speedX = 0;
 	this.speedY = 0;
+	this.radius = this.sprite.getFrameHeight()/2;
 }
 
 

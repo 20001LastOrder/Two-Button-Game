@@ -13,7 +13,9 @@ var mouseX, mouseY;
 const GROUND_HEIGHT = 200;
 const PLAYER_FRAMES = 6;
 const PLAY_Y = 100;
-const EMPTY_SPACE_HEIGHT = 50;
+const EMPTY_SPACE_HEIGHT = 100;
+const DEFAULT_GRAB_POS_X = 470;
+const DEFAULT_GRAB_POS_Y = 210;
 
 //load resorces
 coin.src = "img/sprite/coin.png";
@@ -92,7 +94,7 @@ var spawnCoin = function(){
 	do{
 		hasOverlapWithOtherCoin = false;
 		var x = Math.random() * (canvas.width - coinSprite.getFrameWidth());
-		var y = (Math.random() * (canvas.height - GROUND_HEIGHT -EMPTY_SPACE_HEIGHT - coinSprite.getFrameHeight())) + GROUND_HEIGHT+50;
+		var y = (Math.random() * (canvas.height - GROUND_HEIGHT -EMPTY_SPACE_HEIGHT - coinSprite.getFrameHeight())) + GROUND_HEIGHT+EMPTY_SPACE_HEIGHT;
 		coinSprite.x = x;
 		coinSprite.y = y;
 		for(var i = 0; i < coins.length; i++){
@@ -108,7 +110,7 @@ var spawnCoin = function(){
 
 var drawBackground = function(){
 	context.clearRect(0,0,canvas.width,canvas.height);
-	context.fillStyle = 'black';
+	context.fillStyle = 'orange';
 	context.fillRect(0,0,canvas.width,canvas.height);
 	context.drawImage(ground, 0,0, canvas.width, GROUND_HEIGHT);
 }; //end drawBackGround
@@ -122,20 +124,29 @@ var drawCollectableObjects = function(){
 var drawPlayer = function(player, x, y){
 	player.sprite.animation(true);
 	//rotate and draw the grab
-	player.grab.rotate(player.grabRotation, player.grab.x, player.grab.y );
-	if(player.grabRotation >= Math.PI/3){
+	player.grab.rotate(player.grabRotation, player.grab.x, player.grab.y,-player.grab.getFrameWidth()/2, 0);
+	if(player.grabRotation >= Math.PI/2.5){
 			player.rotationSpeed *= -1;
-	}else if(player.grabRotation <= -Math.PI/3){
+	}else if(player.grabRotation <= -Math.PI/2.5){
 		player.rotationSpeed *= -1;
 	} //end changeRotation
 	player.grabRotation += player.rotationSpeed;
-	//arrow.
+	
+	if(player.currentCollectable != null){
+		drawCurrentCollectable(player);
+	}
+
+	//draw the line to the grab
+	context.beginPath();
+	context.moveTo(DEFAULT_GRAB_POS_X,DEFAULT_GRAB_POS_Y);
+	context.lineTo(player.grab.x, player.grab.y);
+	context.stroke();
 }; //end drawPlayer
 
 var updatePlayer = function(){
 	updateGrab();
 	if(player.currentCollectable != null){
-	
+		updateCurrentCollectable(player);
 	}
 };
 
@@ -151,15 +162,16 @@ var updateGrab = function(){
 		player.grabSpeedX *= -1;
 		player.grabSpeedY *= -1;
 	}else if(isOverlapWithCollectables(player)){
-		player.grab.columnIndex = 1;
-		player.grabSpeedX *= -1;
-		player.grabSpeedY *= -1;
+		player.grab.columnIndex = 1; 
+		player.grabSpeedX *= -1 / ( Math.pow(3,player.currentCollectable.sprite.scaleRatio - 0.5));
+		player.grabSpeedY *= -1 / ( Math.pow(3,player.currentCollectable.sprite.scaleRatio - 0.5));
 
-	}else if(player.grabSpeedY < 0 && Math.round(player.grab.x) == 470 && 
-			 Math.round(player.grab.y) == 200){
+	}else if(player.grabSpeedY < 0 && Math.round(player.grab.x) <= DEFAULT_GRAB_POS_X +5 && 
+			 Math.round(player.grab.x) >= DEFAULT_GRAB_POS_X - 5 &&
+			 Math.round(player.grab.y) <= DEFAULT_GRAB_POS_Y){
 		//reset the position of grab
-		player.grab.x = 470;
-		player.grab.y = 200;
+		player.grab.x = DEFAULT_GRAB_POS_X;
+		player.grab.y = DEFAULT_GRAB_POS_Y;
 		//stop the grab moving
 		player.grabSpeedX = 0;
 		player.grabSpeedY = 0;
@@ -167,7 +179,26 @@ var updateGrab = function(){
 		player.rotationSpeed = 0.05;
 		//reset frame
 		player.grab.columnIndex = 0;
+		player.currentCollectable = null;
 	} //end judge grab
+};
+
+var updateCurrentCollectable = function(thisPlayer){
+	var collectable = thisPlayer.currentCollectable;
+	var thisGrab = thisPlayer.grab;
+	//set the positio of the collectable to near the grab by a length of radius
+	var buttomCenterX = thisGrab.x  + thisGrab.getFrameHeight() * Math.sin(-player.grabRotation) - collectable.radius;
+	var buttomCenterY = thisGrab.y + thisGrab.getFrameHeight() * Math.cos(-player.grabRotation) - collectable.radius;
+	//set the sprite to the last frame
+	collectable.sprite.columnIndex = collectable.sprite.numberOfColomns - 1; //the index starts from 0
+	collectable.sprite.x = buttomCenterX + collectable.radius * Math.sin(-player.grabRotation);
+	collectable.sprite.y = buttomCenterY + collectable.radius * Math.cos(-player.grabRotation);
+	//console.log(collectable.x + ", " + collectable.y);
+};
+
+var drawCurrentCollectable = function(thisPlayer){
+	var collectable = thisPlayer.currentCollectable;
+	collectable.sprite.render();
 };
 
 //return a player object
@@ -180,14 +211,14 @@ var initiatePlayer = function(x, y){
 	thisPlayer.sprite.ticksPerFrame = 3;
 	thisPlayer.grab.scaleRatio = 2;
 	thisPlayer.grab.ticksPerFrame = 5;
-	thisPlayer.grab.x = 2*(x - 30)-324;
-	thisPlayer.grab.y = 2*(y + 60)-120;
+	thisPlayer.grab.x = DEFAULT_GRAB_POS_X;
+	thisPlayer.grab.y = DEFAULT_GRAB_POS_Y;
 	return (thisPlayer);
 }; //end initalte player
 
 var moveGrab = function(){
 	//if the grab is at default position, stop rotation and add speed
-	if(player.grab.x == 470&& player.grab.y == 200){
+	if(player.grab.x == DEFAULT_GRAB_POS_X&& player.grab.y == DEFAULT_GRAB_POS_Y){
 		player.rotationSpeed = 0;
 		player.grabSpeedX = 5 * Math.sin(-player.grabRotation);
 		player.grabSpeedY = 5 * Math.cos(-player.grabRotation);
@@ -223,6 +254,7 @@ var isOverlapWithCollectables = function(thisPlayer){
 		//uses 10 to make it more close to the coin
 		if(distance < radius-10 * coins[i].sprite.scaleRatio){
 			thisPlayer.currentCollectable = coins[i];
+			coins.splice(i,1); //remove this collectable from the array list
 			return true;
 		}
 	}
