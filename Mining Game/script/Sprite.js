@@ -30,21 +30,20 @@ Sprite.prototype.setDimensions = function(rows, colomns){
 };
 
 
-Sprite.prototype.animation = function(isRepeat){
+Sprite.prototype.animation = function(isRepeat, x, y){
 	this.isRpeat = isRepeat;
+	if(typeof(x) == "number" && typeof(y) == "number"){
+		this.x = x;
+		this.y = y;
+	}
 	if(this.needContinue){
 		this.update();
+		this.render();
 	}
-	this.render();
+
 };
 
-Sprite.prototype.animation = function(isRepeat,x,y){
-	this.isRepeat = isRepeat;
-	this.update();
-	if(this.needContinue){
-		this.render(x,y);
-	}
-};
+
 
 Sprite.prototype.update = function(){
 	this.tickCount++;
@@ -159,13 +158,40 @@ function Collectable(sprite, value){
 
 //class for player
 //Sprite number Sprite Sprite
-function Player(sprite, score, grab){
+function Player(sprite, score, grab,gun,explosion){
 	this.sprite = sprite;
 	this.score = score;
 	this.grab = grab;
+	this.gun = gun;
 	this.grabRotation = 0;
 	this.rotationSpeed = 0.05;
 	this.grabSpeedX = 0;
 	this.grabSpeedY = 0;
+	this.firing = false;
+	this.canFire = true;
+	this.gunSpeedX = 10;
+	this.gunSpeedY = 10;
+	this.gunRotation = 0;
+	this.explosion = explosion;
+	explosion.needContinue = false;
+	explosion.isRepeat = false;
 	this.currentCollectable = null; //current hold collectable
 }
+
+Player.prototype.drawExplosion = function(){
+
+	this.explosion.animation(false);
+	console.log(this.explosion.isRepeat);
+};
+
+Player.prototype.resetExplosion = function(x, y, ratio){
+	this.explosion.frameIndex = 0;
+	this.explosion.rowIndex = 0;
+	this.explosion.columnIndex = 0;
+	this.explosion.needContinue = true;
+	this.explosion.x = x;
+	this.explosion.y = y;
+	console.log(ratio)
+	this.explosion.scaleRatio = ratio;
+};
+

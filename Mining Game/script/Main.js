@@ -7,6 +7,10 @@ var ground = new Image();
 var coins = [];
 var player;
 var playerImg = new Image();
+var displayNumebr = new Image();
+var playerGun = new Image();
+var explosionImg = new Image();
+var playerScoreDisplay = [];
 //for mouse control to debug
 var mouseX, mouseY;
 //constants
@@ -16,13 +20,16 @@ const PLAY_Y = 100;
 const EMPTY_SPACE_HEIGHT = 100;
 const DEFAULT_GRAB_POS_X = 470;
 const DEFAULT_GRAB_POS_Y = 210;
-
+const SCORE_X = 10;
+const SCORE_Y = 10;
 //load resorces
 coin.src = "img/sprite/coin.png";
 arrow.src = "img/sprite/Arrow.png";
 ground.src = "img/BG/mine.png";
 playerImg.src = "img/sprite/Player1.png";
-
+displayNumebr.src = "img/sprite/number.png"; 
+playerGun.src = "img/sprite/Gun.png"; 
+explosionImg.src =   "img/sprite/Explosion1.png"                               
 window.onload = function(){
 	startGame();
 	canvas.addEventListener('mousemove', updateMousePos);
@@ -55,11 +62,14 @@ var characterControl = function(event){
 	if(event.keyCode == 83){
 		moveGrab();
 	}
+	if(event.keyCode == 87){
+		moveGun();
+	}
 };
 
 var update = function(){
 	updatePlayer();
-
+	updateScore();
 };
 
 //Draw game contnt
@@ -67,6 +77,7 @@ var drawGame = function(){
 	drawBackground();
 	drawCollectableObjects();
 	drawPlayer(player, 300,50);
+	drawScore();
 	context.fillStyle = "red";
 	context.font="30px Verdana";
 	context.fillText("(" + mouseX + " ," + mouseY + ")", mouseX,mouseY);	
@@ -81,7 +92,13 @@ var startGame = function(){
 		spawnCoin();
 	}
 
+
 	player = initiatePlayer(canvas.width/2 - playerImg.width/(2*PLAYER_FRAMES),PLAY_Y);
+	//initiate score display
+	for(var i = 0; i < 5; i++){
+		playerScoreDisplay[i] = new Sprite(context, 240, 160, displayNumebr,10);
+		playerScoreDisplay[i].numberOfRows = 5;
+	}
 };
 
 var spawnCoin = function(){
@@ -103,7 +120,7 @@ var spawnCoin = function(){
 			}
 		}
 	}while(hasOverlapWithOtherCoin);
-	coins[coinId] = new Collectable(coinSprite, Math.round(100*coinSprite.scaleRatio));
+	coins[coinId] = new Collectable(coinSprite, Math.round(100*Math.exp(coinSprite.scaleRatio)));
 	coinSprite.render(); 
 
 };
@@ -136,6 +153,12 @@ var drawPlayer = function(player, x, y){
 		drawCurrentCollectable(player);
 	}
 
+	if(player.firing){
+		player.gun.rotate(player.gunRotation,player.gun.x, player.gun.y, 3, 0 );
+	}else{
+		player.drawExplosion();
+	}
+
 	//draw the line to the grab
 	context.beginPath();
 	context.moveTo(DEFAULT_GRAB_POS_X,DEFAULT_GRAB_POS_Y);
@@ -147,6 +170,10 @@ var updatePlayer = function(){
 	updateGrab();
 	if(player.currentCollectable != null){
 		updateCurrentCollectable(player);
+	}
+
+	if(player.firing){
+		updateGun();	
 	}
 };
 
@@ -179,7 +206,11 @@ var updateGrab = function(){
 		player.rotationSpeed = 0.05;
 		//reset frame
 		player.grab.columnIndex = 0;
-		player.currentCollectable = null;
+		if(player.currentCollectable != null){
+			player.score += player.currentCollectable.score;
+			player.currentCollectable = null;
+
+		}
 	} //end judge grab
 };
 
@@ -201,11 +232,30 @@ var drawCurrentCollectable = function(thisPlayer){
 	collectable.sprite.render();
 };
 
+var updateScore = function(){
+	var n = player.score;
+	for(var i = playerScoreDisplay.length-1; i > 0; i--){
+		playerScoreDisplay[i].columnIndex = Math.round(n % 10);
+		n = Math.floor(n/10);
+	}
+};
+
+var drawScore = function(){
+	for(var i = 0; i < playerScoreDisplay.length ; i++){
+		playerScoreDisplay[i].render(SCORE_X + i * 30, SCORE_Y);
+	}
+};
+
+
 //return a player object
 var initiatePlayer = function(x, y){
 	var playerSprite = new Sprite(context, 576, 96, playerImg, PLAYER_FRAMES);
 	var grab = new Sprite(context, 54, 30, arrow, 2);
-	var thisPlayer = new Player(playerSprite, 0, grab);
+	var gun = new Sprite(context, 6, 27, playerGun,1);
+	var explosion = new Sprite(context, 960, 576, explosionImg, 12);
+	explosion.numberOfColomns = 5;
+	explosion.numberOfRows = 3;
+	var thisPlayer = new Player(playerSprite, 0, grab, gun, explosion);
 	thisPlayer.sprite.x = x;
 	thisPlayer.sprite.y = y;
 	thisPlayer.sprite.ticksPerFrame = 3;
@@ -215,7 +265,26 @@ var initiatePlayer = function(x, y){
 	thisPlayer.grab.y = DEFAULT_GRAB_POS_Y;
 	return (thisPlayer);
 }; //end initalte player
-
+var updateGun = function(){
+	player.gun.x = player.gun.x + Math.sin(-player.gunRotation)*player.gunSpeedX;
+	player.gun.y = player.gun.y + Math.cos(-player.gunRotation)*player.gunSpeedY;
+	for(var i = 0; i < coins.length; i++){
+		if(player.gun.isOverlap(coins[i].sprite)){
+			//reset the current explosion
+			player.resetExplosion(coins[i].sprite.x - coins[i].radius, coins[i].sprite.y- coins[i].radius, coins[i].sprite.scaleRatio);
+			coins.splice(i,1);
+			player.firing = false;
+		}
+	}
+};
+var moveGun = function(){
+	if(player.canFire){
+		player.firing = true;
+		player.gun.x = DEFAULT_GRAB_POS_X  + player.grab.getFrameHeight() * Math.sin(-player.grabRotation) + 3;
+		player.gun.y = DEFAULT_GRAB_POS_Y+ player.grab.getFrameHeight() * Math.cos(-player.grabRotation);
+		player.gunRotation = player.grabRotation;
+	}
+};
 var moveGrab = function(){
 	//if the grab is at default position, stop rotation and add speed
 	if(player.grab.x == DEFAULT_GRAB_POS_X&& player.grab.y == DEFAULT_GRAB_POS_Y){
@@ -248,7 +317,7 @@ var isOverlapWithCollectables = function(thisPlayer){
 								Math.abs( buttomLeftX - coinCenterX),
 								Math.abs(buttomRightX - coinCenterX));
 		var distanceY = findMin(Math.abs(buttomCenterY - coinCenterY),
-								Math.abs( buttomLeftY - coinCenterY),
+								Math.abs(buttomLeftY - coinCenterY),
 								Math.abs(buttomRightY - coinCenterY));
 		var distance = Math.sqrt(Math.pow(distanceX,2) + Math.pow(distanceY,2));
 		//uses 10 to make it more close to the coin
