@@ -158,11 +158,16 @@ function Collectable(sprite, value){
 
 //class for player
 //Sprite number Sprite Sprite
-function Player(sprite, score, grab,gun,explosion){
+function Player(sprite, score, grab,gun,explosion, defaultGrabX, defaultGrabY ){
 	this.sprite = sprite;
 	this.score = score;
 	this.grab = grab;
+	this.grab.x = defaultGrabX;
+	this.grab.y = defaultGrabY;
 	this.gun = gun;
+	//the player has the same context property as the grab
+	this.context = grab.context;
+	this.canvas = null;
 	this.grabRotation = 0;
 	this.rotationSpeed = 0.05;
 	this.grabSpeedX = 0;
@@ -176,12 +181,13 @@ function Player(sprite, score, grab,gun,explosion){
 	explosion.needContinue = false;
 	explosion.isRepeat = false;
 	this.currentCollectable = null; //current hold collectable
+	this.defaultGrabX = defaultGrabX;
+	this.defaultGrabY = defaultGrabY;
 }
 
 Player.prototype.drawExplosion = function(){
 
 	this.explosion.animation(false);
-	console.log(this.explosion.isRepeat);
 };
 
 Player.prototype.resetExplosion = function(x, y, ratio){
@@ -191,7 +197,215 @@ Player.prototype.resetExplosion = function(x, y, ratio){
 	this.explosion.needContinue = true;
 	this.explosion.x = x;
 	this.explosion.y = y;
-	console.log(ratio)
 	this.explosion.scaleRatio = ratio;
 };
+
+Player.prototype.drawPlayer = function(){ 
+	this.sprite.animation(true);
+	//rotate and draw the grab
+	this.grab.rotate(this.grabRotation, this.grab.x, this.grab.y,-this.grab.getFrameWidth()/2, 0);
+	if(this.grabRotation >= Math.PI/2.5){
+			//reset rotation
+			this.grabRotation = Math.PI/2.5;
+			this.rotationSpeed *= -1;
+	}else if(this.grabRotation <= -Math.PI/2.5){
+		//reset rotation
+		this.grabRotation = -Math.PI/2.5;
+		this.rotationSpeed *= -1;
+	} //end changeRotation
+	this.grabRotation += this.rotationSpeed;
+	
+	if(this.currentCollectable != null){
+		this.drawCurrentCollectable();
+	}
+
+	if(this.firing){
+		this.gun.rotate(this.gunRotation,this.gun.x, this.gun.y, 3, 0 );
+	}else{
+		this.drawExplosion();
+	} //end case in firing
+
+};
+
+Player.prototype.drawLineToGrab = function(){
+	//draw the line to the grab
+	this.context.beginPath();
+	this.context.moveTo(this.defaultGrabX , this.defaultGrabY);
+	this.context.lineTo(this.grab.x, this.grab.y);
+	this.context.stroke();
+};
+
+Player.prototype.drawCurrentCollectable = function(){
+	var collectable = this.currentCollectable;
+	collectable.sprite.render();
+};
+
+Player.prototype.updatePlayer = function(coins){
+	this.updateGrab();
+	if(this.currentCollectable != null){
+		this.updateCurrentCollectable();
+	}
+
+	if(this.firing){
+		this.updateGun(coins);	
+	}
+};
+//update playerScore
+
+Player.prototype.updateScore = function(display){
+	var n = this.score;
+	for(var i = display.length-1; i > 0; i--){
+		display[i].columnIndex = Math.round(n % 10);
+		n = Math.floor(n/10);
+	}
+};
+
+Player.prototype.updateGrab = function(height, width){
+	//add minus sign at the front because clockwise is negative, counterclockwise is positive
+	this.grab.x += (this.grabSpeedX);
+	this.grab.y += (this.grabSpeedY );
+
+	//reset the shift of pictures
+	//if grab is out of the box, put it backward
+	if(this.grab.x >= this.canvas.width - this.grab.getFrameWidth()  || 
+		this.grab.y >= this.canvas.height - this.grab.getFrameHeight() ||
+		this.grab.x  <= this.grab.getFrameHeight()){
+		this.grabSpeedX *= -1;
+		this.grabSpeedY *= -1;
+	}else if( !this.currentCollectable && isOverlapWithCollectables(this)){
+		//if player is overlap with a collectable and player is not holding a collectable, 
+		//pull the grab back
+		this.grab.columnIndex = 1; 
+		if(this.currentCollectable.sprite.scaleRatio < 0.7){
+			this.grabSpeedX *= -1 / ( Math.pow(3,this.currentCollectable.sprite.scaleRatio - 0.5));
+			this.grabSpeedY *= -1 / ( Math.pow(3,this.currentCollectable.sprite.scaleRatio - 0.5));	
+		}else{
+			this.grabSpeedX *= -1 / ( Math.pow(3,this.currentCollectable.sprite.scaleRatio));
+			this.grabSpeedY *= -1 / ( Math.pow(3,this.currentCollectable.sprite.scaleRatio));	
+		}
+
+
+	}else if(this.grabSpeedY < 0 && Math.round(this.grab.x) <= this.defaultGrabX +5 && 
+			 Math.round(this.grab.x) >= this.defaultGrabX - 5 &&
+			 Math.round(this.grab.y) <= this.defaultGrabY){
+		//reset the position of grab
+		this.grab.x = this.defaultGrabX;
+		this.grab.y = this.defaultGrabY;
+		//stop the grab moving
+		this.grabSpeedX = 0;
+		this.grabSpeedY = 0;
+		//start rotation again
+		this.rotationSpeed = 0.05;
+		//reset frame
+		this.grab.columnIndex = 0;
+		if(this.currentCollectable != null){
+			this.score += this.currentCollectable.score;
+			this.currentCollectable = null;
+
+		}
+	} //end judge grab
+};
+
+Player.prototype.updateCurrentCollectable = function(){
+	//create short-hand objects for convinience
+	var collectable = this.currentCollectable;
+	var thisGrab = this.grab;
+	//set the positio of the collectable to near the grab by a length of radius
+	var buttomCenterX = thisGrab.x  + thisGrab.getFrameHeight() * Math.sin(-this.grabRotation) - collectable.radius;
+	var buttomCenterY = thisGrab.y + thisGrab.getFrameHeight() * Math.cos(-this.grabRotation) - collectable.radius;
+	//set the sprite to the last frame
+	collectable.sprite.columnIndex = collectable.sprite.numberOfColomns - 1; //the index starts from 0
+	collectable.sprite.x = buttomCenterX + collectable.radius * Math.sin(-this.grabRotation);
+	collectable.sprite.y = buttomCenterY + collectable.radius * Math.cos(-this.grabRotation);
+};
+
+//update the gun according to the coins
+//list(collectables)
+Player.prototype.updateGun = function(coins){
+	this.gun.x = this.gun.x + Math.sin(-this.gunRotation)*this.gunSpeedX;
+	this.gun.y = this.gun.y + Math.cos(-this.gunRotation)*this.gunSpeedY;
+	for(var i = 0; i < coins.length; i++){
+		if(this.gun.isOverlap(coins[i].sprite)){
+			//reset the current explosion
+			this.resetExplosion(coins[i].sprite.x - coins[i].radius, coins[i].sprite.y- coins[i].radius, coins[i].sprite.scaleRatio);
+			coins.splice(i,1);
+			this.firing = false;
+		}
+	} //end loop through collectable on field
+	//check collectable in grab
+	if(this.currentCollectable){
+			if(this.gun.isOverlap(this.currentCollectable.sprite)){
+				var tmp = this.currentCollectable;
+				this.resetExplosion(tmp.sprite.x - tmp.radius, tmp.sprite.y- tmp.radius, tmp.sprite.scaleRatio);
+				this.firing = false;
+				//delet current collectable
+				this.currentCollectable = null;
+				//set speed to normal
+				this.grabSpeedX = -5 * Math.sin(-this.grabRotation);
+				this.grabSpeedY = -5 * Math.cos(-this.grabRotation);
+				//put grab frame to 0
+				this.grab.columnIndex = 0;
+			}
+	}
+
+	if(this.gun.x > this.canvas.width || this.gun.x < 0 || this.gun.y >canvas.height || this.gun.y < 0 ){
+		this.firing = false;
+	}
+	//if the gun is not firing, allow next fire
+	if(!this.firing){
+		this.canFire = true;
+	}
+
+
+};
+
+//find if a player's grab is overlap with any collectables
+var isOverlapWithCollectables = function(thisPlayer){
+	var player = thisPlayer;
+	var thisGrab = thisPlayer.grab;
+	//add minus sign to the angle because clockwise is negative, counterclockwise is positive.
+	var buttomCenterX = thisGrab.x  + thisGrab.getFrameHeight() * Math.sin(-player.grabRotation);
+	var buttomCenterY = thisGrab.y + thisGrab.getFrameHeight() * Math.cos(-player.grabRotation); 
+
+	var buttomLeftX = buttomCenterX - (thisGrab.getFrameWidth() / 2 - 5) * Math.cos(-player.grabRotation);
+	var buttomLeftY = buttomCenterY + (thisGrab.getFrameWidth() / 2 - 5) * Math.sin(-player.grabRotation);
+	var buttomRightX = buttomCenterX + (thisGrab.getFrameWidth() / 2 - 5) * Math.cos(-player.grabRotation);
+	var buttomRightY = buttomCenterY - (thisGrab.getFrameWidth() / 2 - 5) * Math.sin(-player.grabRotation);
+	for(var i = 0; i < coins.length; i++){
+		//find the position of the center
+		//the collectable sprite are all is squares, use circle to approach the shape
+		var radius = coins[i].sprite.getFrameWidth()/2;
+		var coinCenterX = coins[i].sprite.x + radius;
+		var coinCenterY = coins[i].sprite.y + radius;
+
+		//get the shortest distance from the center to the buttom 3 points;
+		var distanceX = findMin(Math.abs(buttomCenterX - coinCenterX),
+								Math.abs( buttomLeftX - coinCenterX),
+								Math.abs(buttomRightX - coinCenterX));
+		var distanceY = findMin(Math.abs(buttomCenterY - coinCenterY),
+								Math.abs(buttomLeftY - coinCenterY),
+								Math.abs(buttomRightY - coinCenterY));
+		var distance = Math.sqrt(Math.pow(distanceX,2) + Math.pow(distanceY,2));
+		//uses 10 to make it more close to the coin
+		if(distance < radius-10 * coins[i].sprite.scaleRatio){
+			thisPlayer.currentCollectable = coins[i];
+			coins.splice(i,1); //remove this collectable from the array list
+			return true;
+		}
+	}
+
+	return false;
+};
+
+var findMin = function(x,y,z){
+	var min = x;
+	if(y < min){
+		min = y;
+	}
+	if(z < min){
+		min = z;
+	}
+	return min;
+};
+
 

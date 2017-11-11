@@ -1,35 +1,48 @@
 var canvas;
 var Context;
-var numOfCoins = 10;
+var numOfCoins = 20;
 var coin = new Image();
-var arrow = new Image();
+var player1Grab = new Image();
+var player2Grab = new Image();
 var ground = new Image();
 var coins = [];
-var player;
-var playerImg = new Image();
+var player1;
+var player2;
+var player1Img = new Image();
+var player2Img = new Image();
 var displayNumebr = new Image();
-var playerGun = new Image();
+var player1Gun = new Image();
+var player2Gun = new Image();
 var explosionImg = new Image();
-var playerScoreDisplay = [];
+var player1ScoreDisplay = [];
+var player2ScoreDisplay = [];
 //for mouse control to debug
 var mouseX, mouseY;
 //constants
 const GROUND_HEIGHT = 200;
-const PLAYER_FRAMES = 6;
+const PLAYER1_FRAMES = 6;
+const PLAYER2_FRAMES = 5;
 const PLAY_Y = 100;
 const EMPTY_SPACE_HEIGHT = 100;
-const DEFAULT_GRAB_POS_X = 470;
-const DEFAULT_GRAB_POS_Y = 210;
-const SCORE_X = 10;
-const SCORE_Y = 10;
+const DEFAULT_GRAB1_POS_X = 360;
+const DEFAULT_GRAB1_POS_Y = 210;
+const DEFAULT_GRAB2_POS_X = 610;
+const DEFAULT_GRAB2_POS_Y = 210;
+const SCORE1_X = 10;
+const SCORE1_Y = 10;
+const SCORE2_X = 700;
+const SCORE2_Y = 10;
 //load resorces
 coin.src = "img/sprite/coin.png";
-arrow.src = "img/sprite/Arrow.png";
+player1Grab.src = "img/sprite/grab1.png";
+player2Grab.src = "img/sprite/grab2.png";
 ground.src = "img/BG/mine.png";
-playerImg.src = "img/sprite/Player1.png";
+player1Img.src = "img/sprite/player1.png";
+player2Img.src = "img/sprite/player2.png";
 displayNumebr.src = "img/sprite/number.png"; 
-playerGun.src = "img/sprite/Gun.png"; 
-explosionImg.src =   "img/sprite/Explosion1.png"                               
+player1Gun.src = "img/sprite/gun1.png";
+player2Gun.src = "img/sprite/gun2.png"; 
+explosionImg.src =   "img/sprite/Explosion1.png";                               
 window.onload = function(){
 	startGame();
 	canvas.addEventListener('mousemove', updateMousePos);
@@ -60,23 +73,35 @@ var updateMousePos = function(evt) {
 
 var characterControl = function(event){
 	if(event.keyCode == 83){
-		moveGrab();
+		moveGrab(player1);
+	}
+	if(event.keyCode == 40){
+		moveGrab(player2);
 	}
 	if(event.keyCode == 87){
-		moveGun();
+		moveGun(player1);
+	}
+	if(event.keyCode == 38){
+		moveGun(player2);
 	}
 };
 
 var update = function(){
-	updatePlayer();
-	updateScore();
+	player1.updatePlayer(coins);
+	//update the score of player1 to player1 display
+	player1.updateScore(player1ScoreDisplay);
+	player2.updatePlayer(coins);
+	player2.updateScore(player2ScoreDisplay);
 };
 
 //Draw game contnt
 var drawGame = function(){
 	drawBackground();
 	drawCollectableObjects();
-	drawPlayer(player, 300,50);
+	player1.drawPlayer();
+	player1.drawLineToGrab(DEFAULT_GRAB1_POS_X,DEFAULT_GRAB1_POS_Y);
+	player2.drawPlayer();
+	player2.drawLineToGrab(DEFAULT_GRAB2_POS_X, DEFAULT_GRAB2_POS_Y);
 	drawScore();
 	context.fillStyle = "red";
 	context.font="30px Verdana";
@@ -93,11 +118,18 @@ var startGame = function(){
 	}
 
 
-	player = initiatePlayer(canvas.width/2 - playerImg.width/(2*PLAYER_FRAMES),PLAY_Y);
+	player1 = initiatePlayer(310,PLAY_Y, player1Img,player1Gun,player1Grab, 
+							PLAYER1_FRAMES, DEFAULT_GRAB1_POS_X, DEFAULT_GRAB1_POS_Y);
+	player2 = initiatePlayer(560,PLAY_Y, player2Img, player2Gun, player2Grab, 
+							PLAYER2_FRAMES, DEFAULT_GRAB2_POS_X, DEFAULT_GRAB2_POS_Y);
 	//initiate score display
 	for(var i = 0; i < 5; i++){
-		playerScoreDisplay[i] = new Sprite(context, 240, 160, displayNumebr,10);
-		playerScoreDisplay[i].numberOfRows = 5;
+		player1ScoreDisplay[i] = new Sprite(context, 240, 160, displayNumebr,10);
+		player1ScoreDisplay[i].numberOfRows = 5;
+		player1ScoreDisplay[i].rowIndex = 2;
+		player2ScoreDisplay[i] = new Sprite(context, 240, 160, displayNumebr,10);
+		player2ScoreDisplay[i].numberOfRows = 5;
+		player2ScoreDisplay[i].rowIndex = 2;
 	}
 };
 
@@ -120,7 +152,17 @@ var spawnCoin = function(){
 			}
 		}
 	}while(hasOverlapWithOtherCoin);
-	coins[coinId] = new Collectable(coinSprite, Math.round(100*Math.exp(coinSprite.scaleRatio)));
+	var score;
+	if(coinSprite.scaleRatio > 0.5 && coinSprite.scaleRatio <= 0.7){
+		score = 200;
+	}else if(coinSprite.scaleRatio > 0.7 && coinSprite.scaleRatio <= 0.8){
+		score = 400;
+	}else if(coinSprite.scaleRatio > 0.8 && coinSprite.scaleRatio <= 0.9){
+		score = 900;
+	}else if(coinSprite.scaleRatio > 0.9 && coinSprite.scaleRatio <= 1){
+		score = 1200;
+	}
+	coins[coinId] = new Collectable(coinSprite, score);
 	coinSprite.render(); 
 
 };
@@ -138,206 +180,49 @@ var drawCollectableObjects = function(){
 	}
 }; //end drawCollectableObjects
 
-var drawPlayer = function(player, x, y){
-	player.sprite.animation(true);
-	//rotate and draw the grab
-	player.grab.rotate(player.grabRotation, player.grab.x, player.grab.y,-player.grab.getFrameWidth()/2, 0);
-	if(player.grabRotation >= Math.PI/2.5){
-			player.rotationSpeed *= -1;
-	}else if(player.grabRotation <= -Math.PI/2.5){
-		player.rotationSpeed *= -1;
-	} //end changeRotation
-	player.grabRotation += player.rotationSpeed;
-	
-	if(player.currentCollectable != null){
-		drawCurrentCollectable(player);
-	}
-
-	if(player.firing){
-		player.gun.rotate(player.gunRotation,player.gun.x, player.gun.y, 3, 0 );
-	}else{
-		player.drawExplosion();
-	}
-
-	//draw the line to the grab
-	context.beginPath();
-	context.moveTo(DEFAULT_GRAB_POS_X,DEFAULT_GRAB_POS_Y);
-	context.lineTo(player.grab.x, player.grab.y);
-	context.stroke();
-}; //end drawPlayer
-
-var updatePlayer = function(){
-	updateGrab();
-	if(player.currentCollectable != null){
-		updateCurrentCollectable(player);
-	}
-
-	if(player.firing){
-		updateGun();	
-	}
-};
-
-var updateGrab = function(){
-	//add minus sign at the front because clockwise is negative, counterclockwise is positive
-	player.grab.x += (player.grabSpeedX);
-	player.grab.y += (player.grabSpeedY );
-	//reset the shift of pictures
-	//if grab is out of the box, put it backward
-	if(player.grab.x >= canvas.width - player.grab.getFrameWidth()  || 
-		player.grab.y >= canvas.height - player.grab.getFrameHeight() ||
-		player.grab.x  <= player.grab.getFrameHeight()){
-		player.grabSpeedX *= -1;
-		player.grabSpeedY *= -1;
-	}else if(isOverlapWithCollectables(player)){
-		player.grab.columnIndex = 1; 
-		player.grabSpeedX *= -1 / ( Math.pow(3,player.currentCollectable.sprite.scaleRatio - 0.5));
-		player.grabSpeedY *= -1 / ( Math.pow(3,player.currentCollectable.sprite.scaleRatio - 0.5));
-
-	}else if(player.grabSpeedY < 0 && Math.round(player.grab.x) <= DEFAULT_GRAB_POS_X +5 && 
-			 Math.round(player.grab.x) >= DEFAULT_GRAB_POS_X - 5 &&
-			 Math.round(player.grab.y) <= DEFAULT_GRAB_POS_Y){
-		//reset the position of grab
-		player.grab.x = DEFAULT_GRAB_POS_X;
-		player.grab.y = DEFAULT_GRAB_POS_Y;
-		//stop the grab moving
-		player.grabSpeedX = 0;
-		player.grabSpeedY = 0;
-		//start rotation again
-		player.rotationSpeed = 0.05;
-		//reset frame
-		player.grab.columnIndex = 0;
-		if(player.currentCollectable != null){
-			player.score += player.currentCollectable.score;
-			player.currentCollectable = null;
-
-		}
-	} //end judge grab
-};
-
-var updateCurrentCollectable = function(thisPlayer){
-	var collectable = thisPlayer.currentCollectable;
-	var thisGrab = thisPlayer.grab;
-	//set the positio of the collectable to near the grab by a length of radius
-	var buttomCenterX = thisGrab.x  + thisGrab.getFrameHeight() * Math.sin(-player.grabRotation) - collectable.radius;
-	var buttomCenterY = thisGrab.y + thisGrab.getFrameHeight() * Math.cos(-player.grabRotation) - collectable.radius;
-	//set the sprite to the last frame
-	collectable.sprite.columnIndex = collectable.sprite.numberOfColomns - 1; //the index starts from 0
-	collectable.sprite.x = buttomCenterX + collectable.radius * Math.sin(-player.grabRotation);
-	collectable.sprite.y = buttomCenterY + collectable.radius * Math.cos(-player.grabRotation);
-	//console.log(collectable.x + ", " + collectable.y);
-};
-
-var drawCurrentCollectable = function(thisPlayer){
-	var collectable = thisPlayer.currentCollectable;
-	collectable.sprite.render();
-};
-
-var updateScore = function(){
-	var n = player.score;
-	for(var i = playerScoreDisplay.length-1; i > 0; i--){
-		playerScoreDisplay[i].columnIndex = Math.round(n % 10);
-		n = Math.floor(n/10);
-	}
-};
-
 var drawScore = function(){
-	for(var i = 0; i < playerScoreDisplay.length ; i++){
-		playerScoreDisplay[i].render(SCORE_X + i * 30, SCORE_Y);
+	for(var i = 0; i < player1ScoreDisplay.length ; i++){
+		player1ScoreDisplay[i].render(SCORE1_X + i * 30, SCORE1_Y);
+		player2ScoreDisplay[i].render(SCORE2_X + i * 30, SCORE2_Y);
 	}
 };
 
 
 //return a player object
-var initiatePlayer = function(x, y){
-	var playerSprite = new Sprite(context, 576, 96, playerImg, PLAYER_FRAMES);
+var initiatePlayer = function(x, y, playerImg, playerGun, arrow, frames, grabX, grabY){
+	var playerSprite = new Sprite(context, playerImg.width, playerImg.height, playerImg, frames);
 	var grab = new Sprite(context, 54, 30, arrow, 2);
 	var gun = new Sprite(context, 6, 27, playerGun,1);
 	var explosion = new Sprite(context, 960, 576, explosionImg, 12);
 	explosion.numberOfColomns = 5;
 	explosion.numberOfRows = 3;
-	var thisPlayer = new Player(playerSprite, 0, grab, gun, explosion);
+	var thisPlayer = new Player(playerSprite, 0, grab, gun, explosion, grabX, grabY);
 	thisPlayer.sprite.x = x;
 	thisPlayer.sprite.y = y;
 	thisPlayer.sprite.ticksPerFrame = 3;
 	thisPlayer.grab.scaleRatio = 2;
 	thisPlayer.grab.ticksPerFrame = 5;
-	thisPlayer.grab.x = DEFAULT_GRAB_POS_X;
-	thisPlayer.grab.y = DEFAULT_GRAB_POS_Y;
+	thisPlayer.canvas = canvas;
 	return (thisPlayer);
 }; //end initalte player
-var updateGun = function(){
-	player.gun.x = player.gun.x + Math.sin(-player.gunRotation)*player.gunSpeedX;
-	player.gun.y = player.gun.y + Math.cos(-player.gunRotation)*player.gunSpeedY;
-	for(var i = 0; i < coins.length; i++){
-		if(player.gun.isOverlap(coins[i].sprite)){
-			//reset the current explosion
-			player.resetExplosion(coins[i].sprite.x - coins[i].radius, coins[i].sprite.y- coins[i].radius, coins[i].sprite.scaleRatio);
-			coins.splice(i,1);
-			player.firing = false;
-		}
+
+var moveGun = function(thisPlayer){
+	if(thisPlayer.canFire){
+		thisPlayer.firing = true;
+		thisPlayer.canFire = false;
+		thisPlayer.gun.x = thisPlayer.defaultGrabX  + thisPlayer.grab.getFrameHeight() * Math.sin(-thisPlayer.grabRotation) + 3;
+		thisPlayer.gun.y = thisPlayer.defaultGrabY+ thisPlayer.grab.getFrameHeight() * Math.cos(-thisPlayer.grabRotation);
+		thisPlayer.gunRotation = thisPlayer.grabRotation;
 	}
 };
-var moveGun = function(){
-	if(player.canFire){
-		player.firing = true;
-		player.gun.x = DEFAULT_GRAB_POS_X  + player.grab.getFrameHeight() * Math.sin(-player.grabRotation) + 3;
-		player.gun.y = DEFAULT_GRAB_POS_Y+ player.grab.getFrameHeight() * Math.cos(-player.grabRotation);
-		player.gunRotation = player.grabRotation;
-	}
-};
-var moveGrab = function(){
+
+var moveGrab = function(thisPlayer){
 	//if the grab is at default position, stop rotation and add speed
-	if(player.grab.x == DEFAULT_GRAB_POS_X&& player.grab.y == DEFAULT_GRAB_POS_Y){
-		player.rotationSpeed = 0;
-		player.grabSpeedX = 5 * Math.sin(-player.grabRotation);
-		player.grabSpeedY = 5 * Math.cos(-player.grabRotation);
+	if(thisPlayer.grab.x == thisPlayer.defaultGrabX&& thisPlayer.grab.y == thisPlayer.defaultGrabY){
+		thisPlayer.rotationSpeed = 0;
+		thisPlayer.grabSpeedX = 5 * Math.sin(-thisPlayer.grabRotation);
+		thisPlayer.grabSpeedY = 5 * Math.cos(-thisPlayer.grabRotation);
+
 	}
 };
 
-//find if a player's grab is overlap with any collectables
-var isOverlapWithCollectables = function(thisPlayer){
-	var thisGrab = thisPlayer.grab;
-	//add minus sign to the angle because clockwise is negative, counterclockwise is positive.
-	var buttomCenterX = thisGrab.x  + thisGrab.getFrameHeight() * Math.sin(-player.grabRotation);
-	var buttomCenterY = thisGrab.y + thisGrab.getFrameHeight() * Math.cos(-player.grabRotation); 
-
-	var buttomLeftX = buttomCenterX - (thisGrab.getFrameWidth() / 2 - 5) * Math.cos(-player.grabRotation);
-	var buttomLeftY = buttomCenterY + (thisGrab.getFrameWidth() / 2 - 5) * Math.sin(-player.grabRotation);
-	var buttomRightX = buttomCenterX + (thisGrab.getFrameWidth() / 2 - 5) * Math.cos(-player.grabRotation);
-	var buttomRightY = buttomCenterY - (thisGrab.getFrameWidth() / 2 - 5) * Math.sin(-player.grabRotation);
-	for(var i = 0; i < coins.length; i++){
-		//find the position of the center
-		//the collectable sprite are all is squares, use circle to approach the shape
-		var radius = coins[i].sprite.getFrameWidth()/2;
-		var coinCenterX = coins[i].sprite.x + radius;
-		var coinCenterY = coins[i].sprite.y + radius;
-
-		//get the shortest distance from the center to the buttom 3 points;
-		var distanceX = findMin(Math.abs(buttomCenterX - coinCenterX),
-								Math.abs( buttomLeftX - coinCenterX),
-								Math.abs(buttomRightX - coinCenterX));
-		var distanceY = findMin(Math.abs(buttomCenterY - coinCenterY),
-								Math.abs(buttomLeftY - coinCenterY),
-								Math.abs(buttomRightY - coinCenterY));
-		var distance = Math.sqrt(Math.pow(distanceX,2) + Math.pow(distanceY,2));
-		//uses 10 to make it more close to the coin
-		if(distance < radius-10 * coins[i].sprite.scaleRatio){
-			thisPlayer.currentCollectable = coins[i];
-			coins.splice(i,1); //remove this collectable from the array list
-			return true;
-		}
-	}
-
-	return false;
-};
-
-var findMin = function(x,y,z){
-	var min = x;
-	if(y < min){
-		min = y;
-	}
-	if(z < min){
-		min = z;
-	}
-	return min;
-};
