@@ -141,12 +141,14 @@ var startGame = function(){
 							PLAYER2_FRAMES, DEFAULT_GRAB2_POS_X, DEFAULT_GRAB2_POS_Y);
 	//initiate score display
 	for(var i = 0; i < 5; i++){
-		player1ScoreDisplay[i] = new Sprite(context, 240, 160, displayNumebr,10);
-		player1ScoreDisplay[i].numberOfRows = 5;
-		player1ScoreDisplay[i].rowIndex = 2;
-		player2ScoreDisplay[i] = new Sprite(context, 240, 160, displayNumebr,10);
-		player2ScoreDisplay[i].numberOfRows = 5;
-		player2ScoreDisplay[i].rowIndex = 2;
+		player1ScoreDisplay[i] = new Sprite(context, 169, 19, displayNumebr,10);
+		player1ScoreDisplay[i].scaleRatio = 1.5;
+		//player1ScoreDisplay[i].numberOfRows = 5;
+		//player1ScoreDisplay[i].rowIndex = 2;
+		player2ScoreDisplay[i] = new Sprite(context, 169, 19, displayNumebr,10);
+		player2ScoreDisplay[i].scaleRatio = 1.5; 
+		//player2ScoreDisplay[i].numberOfRows = 5;
+		//player2ScoreDisplay[i].rowIndex = 2;
 	}
 };
 
