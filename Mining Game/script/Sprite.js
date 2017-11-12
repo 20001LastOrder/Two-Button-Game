@@ -173,7 +173,7 @@ function Player(sprite, score, grab,gun,explosion, defaultGrabX, defaultGrabY ){
 	this.grabSpeedX = 0;
 	this.grabSpeedY = 0;
 	this.firing = false;
-	this.canFire = true;
+	this.canFire = false;
 	this.gunSpeedX = 10;
 	this.gunSpeedY = 10;
 	this.gunRotation = 0;
@@ -183,6 +183,7 @@ function Player(sprite, score, grab,gun,explosion, defaultGrabX, defaultGrabY ){
 	this.currentCollectable = null; //current hold collectable
 	this.defaultGrabX = defaultGrabX;
 	this.defaultGrabY = defaultGrabY;
+	this.timer = 0;
 }
 
 Player.prototype.drawExplosion = function(){
@@ -224,7 +225,10 @@ Player.prototype.drawPlayer = function(){
 	}else{
 		this.drawExplosion();
 	} //end case in firing
+};
 
+Player.prototype.drawGunIcon = function(x, y){
+	this.gun.render(x,y);
 };
 
 Player.prototype.drawLineToGrab = function(){
@@ -248,6 +252,15 @@ Player.prototype.updatePlayer = function(coins){
 
 	if(this.firing){
 		this.updateGun(coins);	
+	}
+	//if the gun is not firing, allow next fire
+	if(!this.firing && this.score>=200 && this.timer >= 150){
+		this.canFire = true;
+		this.timer = 0;
+	}
+
+	if(this.timer <= 150){
+		this.timer ++;
 	}
 };
 //update playerScore
@@ -351,12 +364,6 @@ Player.prototype.updateGun = function(coins){
 	if(this.gun.x > this.canvas.width || this.gun.x < 0 || this.gun.y >canvas.height || this.gun.y < 0 ){
 		this.firing = false;
 	}
-	//if the gun is not firing, allow next fire
-	if(!this.firing){
-		this.canFire = true;
-	}
-
-
 };
 
 //find if a player's grab is overlap with any collectables

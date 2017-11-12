@@ -18,6 +18,7 @@ var player1ScoreDisplay = [];
 var player2ScoreDisplay = [];
 //for mouse control to debug
 var mouseX, mouseY;
+var timer = 0;
 //constants
 const GROUND_HEIGHT = 200;
 const PLAYER1_FRAMES = 6;
@@ -51,6 +52,7 @@ window.onload = function(){
 	setInterval(function(){
 		update();
 		drawGame();
+		updateAndShowTimer();
 		//function to detecting the mouse movement for debugging
 		
 		/*sprite.render(0,0);
@@ -69,6 +71,14 @@ var updateMousePos = function(evt) {
 	mouseX = evt.clientX - rect.left - root.scrollLeft;
 	mouseY = evt.clientY - rect.top - root.scrollTop;
 
+};
+
+var updateAndShowTimer = function(){
+	timer = timer + 1;
+	var timeLeft = Math.ceil(60 - timer / 30);
+	context.fillStyle = "red";
+	context.font="30px Verdana";
+	context.fillText("Time Left: " + timeLeft, canvas.width/2 - 100, 30);
 };
 
 var characterControl = function(event){
@@ -103,6 +113,13 @@ var drawGame = function(){
 	player2.drawPlayer();
 	player2.drawLineToGrab(DEFAULT_GRAB2_POS_X, DEFAULT_GRAB2_POS_Y);
 	drawScore();
+	if(player1.canFire){
+		player1.drawGunIcon(SCORE1_X + 10, SCORE1_Y + 35);
+	}
+
+	if(player2.canFire){
+		player2.drawGunIcon(SCORE2_X + 10, SCORE2_Y + 35);
+	}
 	context.fillStyle = "red";
 	context.font="30px Verdana";
 	context.fillText("(" + mouseX + " ," + mouseY + ")", mouseX,mouseY);	
@@ -207,7 +224,8 @@ var initiatePlayer = function(x, y, playerImg, playerGun, arrow, frames, grabX, 
 }; //end initalte player
 
 var moveGun = function(thisPlayer){
-	if(thisPlayer.canFire){
+	if(thisPlayer.canFire ){
+		thisPlayer.score -= 200;	
 		thisPlayer.firing = true;
 		thisPlayer.canFire = false;
 		thisPlayer.gun.x = thisPlayer.defaultGrabX  + thisPlayer.grab.getFrameHeight() * Math.sin(-thisPlayer.grabRotation) + 3;
