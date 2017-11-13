@@ -14,7 +14,6 @@ var displayNumebr = new Image();
 var player1Gun = new Image();
 var player2Gun = new Image();
 var explosionImg = new Image();
-var winImg = new Image();
 var executionImg = new Image();
 var player1ScoreDisplay = [];
 var player2ScoreDisplay = [];
@@ -23,7 +22,6 @@ var doublePlayer = true;
 var execution; //image for punishing the losing player
 var newGame = false;
 var gameoverImg = new Image();
-var explosions;
 var stonesImg = [new Image(), new Image(), new Image()];
 //for mouse control to debug
 var mouseX, mouseY;
@@ -47,8 +45,7 @@ const SCORE2_Y = 10;
 coin.src = "img/sprite/coin.png";
 player1Grab.src = "img/sprite/grab1.png";
 player2Grab.src = "img/sprite/grab2.png";
-ground.src = "img/BG/mine.png";
-winImg.src = "img/BG/Plain.png";
+ground.src = "img/BG/Mine.png";
 player1Img.src = "img/sprite/player1.png";
 player2Img.src = "img/sprite/player2.png";
 displayNumebr.src = "img/sprite/number.png"; 
@@ -99,24 +96,29 @@ var updateAndShowTimer = function(){
 
 var characterControl = function(event){
 	if(newGame){
-		if(event.keyCode == 83){
-			moveGrab(player1);
-		}
+		if(timer <= 60 * framePerSecond){
+			if(event.keyCode == 83){
+				moveGrab(player1);
+			}
 
-		if(event.keyCode == 87){
-			moveGun(player1);
-		}
-		if(doublePlayer){
-			if(event.keyCode == 40){
-				moveGrab(player2);
+			if(event.keyCode == 87){
+				moveGun(player1);
 			}
-			if(event.keyCode == 38){
-				moveGun(player2);
+			if(doublePlayer){
+				if(event.keyCode == 40){
+				    event.preventDefault();
+					moveGrab(player2);
+				}
+				if(event.keyCode == 38){
+					event.preventDefault();
+					moveGun(player2);
+				}
 			}
-		}
-		if(event.keyCode == 32){
-			newGame = false;
-			startGame();
+		}else{
+			if(event.keyCode == 87){
+				newGame = false;
+				startGame();
+			}
 		}
 	}else{
 		if(event.keyCode == 87){
@@ -142,10 +144,17 @@ var drawTitleScreen = function(){
 	context.fillStyle = "black";
 	context.font = "25px Arial";
 	context.strokeText("Only the One Getting Higher Score Can Survive", canvas.width/2 , 250);
+	context.fillText("Player1",player1.sprite.x + player1.sprite.getFrameWidth()/2, 250);
+	context.fillText("W : Shoot Bullet",player1.sprite.x + player1.sprite.getFrameWidth()/2, 300);
+	context.fillText("S : Shoot Hook",player1.sprite.x + player1.sprite.getFrameWidth()/2, 350);
+	context.fillText("Player2",player2.sprite.x + player2.sprite.getFrameWidth()/2, 250);
+	context.fillText('\u2191' + ": Shoot Bullet",player2.sprite.x + player2.sprite.getFrameWidth()/2, 300);
+	context.fillText('\u2193'+" : Shoot Hook",player2.sprite.x + player2.sprite.getFrameWidth()/2, 350);
 	context.font="40px Comic Sans MS";
 	context.fillStyle = "red";
 	context.fillText("Press W for Single Player", canvas.width/2 , 400);
 	context.fillText("Press S for Double Player", canvas.width/2 ,500);
+    
 };
 var showGameOver = function(){
 	if(doublePlayer){
@@ -186,7 +195,7 @@ var showGameOver = function(){
 			context.fillStyle = gradient;
 			context.textAlign = "center";
 			context.fillText("You Win!!!", canvas.width/2 , 100);
-			context.fillText("Press Space To Go Back", canvas.width/2 ,200);
+			context.fillText("Press W To Go Back", canvas.width/2 ,200);
 
 		}
 	}else{
@@ -297,7 +306,7 @@ var spawnCollectable = function(){
 	coinId = coins.length;
 	var coinSprite;
 	var score;
-	if(coins.length <= 8){
+	if(coins.length <= 13){
 		coinSprite = new Sprite(context, 1000,100,coin,10);
 		coinSprite.scaleRatio = (Math.random()*0.5) + 0.5;
 		if(coinSprite.scaleRatio > 0.5 && coinSprite.scaleRatio <= 0.7){

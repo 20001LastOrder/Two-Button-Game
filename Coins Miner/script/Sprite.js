@@ -297,7 +297,7 @@ Player.prototype.updateGrab = function(otherPlayer){
 		this.grab.x  <= this.grab.getFrameHeight()){
 		this.grabSpeedX *= -1;
 		this.grabSpeedY *= -1;
-	}else if( !this.currentCollectable && isOverlapWithCollectables(this, otherPlayer)){
+	}else if( !this.currentCollectable && isOverlapWithCollectables(this, otherPlayer) ){
 		//if player is overlap with a collectable and player is not holding a collectable, 
 		//pull the grab back
 		this.grab.columnIndex = 1; 
@@ -399,25 +399,27 @@ Player.prototype.updateGun = function(coins, otherPlayer){
 
 //find if a player's grab is overlap with any collectables or other player's collectable
 var isOverlapWithCollectables = function(thisPlayer, otherPlayer){
-	for(var i = 0; i < coins.length; i++){	
-		//uses 10 to make it more close to the coin
-		if(isOverlapWithOneCollectable(thisPlayer, coins[i])){
-			thisPlayer.currentCollectable = coins[i];
-			coins.splice(i,1); //remove this collectable from the array list
-			return true;
-		}
-	}
-	if(otherPlayer != null && otherPlayer.currentCollectable != null){
-		if(otherPlayer.currentCollectable.sprite != null){
-			if(isOverlapWithOneCollectable(thisPlayer, otherPlayer.currentCollectable)){
-				thisPlayer.currentCollectable = otherPlayer.currentCollectable;
-				otherPlayer.currentCollectable = new Collectable(null, 0);
-				//set speed of other player to normal
-				otherPlayer.grabSpeedX = -otherPlayer.defaultGrabSpeedX * Math.sin(-otherPlayer.grabRotation);
-				otherPlayer.grabSpeedY = -otherPlayer.defaultGrabSpeedY * Math.cos(-otherPlayer.grabRotation);
-				//put grab of otherplayer frame to 0
-				otherPlayer.grab.columnIndex = 0;
+	if(thisPlayer.grabSpeedY > 0 && thisPlayer.currentCollect == null){
+		for(var i = 0; i < coins.length; i++){	
+			//uses 10 to make it more close to the coin
+			if(isOverlapWithOneCollectable(thisPlayer, coins[i])){
+				thisPlayer.currentCollectable = coins[i];
+				coins.splice(i,1); //remove this collectable from the array list
 				return true;
+			}
+		}
+		if(otherPlayer != null && otherPlayer.currentCollectable != null){
+			if(otherPlayer.currentCollectable.sprite != null){
+				if(isOverlapWithOneCollectable(thisPlayer, otherPlayer.currentCollectable)){
+					thisPlayer.currentCollectable = otherPlayer.currentCollectable;
+					otherPlayer.currentCollectable = new Collectable(null, 0);
+					//set speed of other player to normal
+					otherPlayer.grabSpeedX = -otherPlayer.defaultGrabSpeedX * Math.sin(-otherPlayer.grabRotation);
+					otherPlayer.grabSpeedY = -otherPlayer.defaultGrabSpeedY * Math.cos(-otherPlayer.grabRotation);
+					//put grab of otherplayer frame to 0
+					otherPlayer.grab.columnIndex = 0;
+					return true;
+				}
 			}
 		}
 	}
